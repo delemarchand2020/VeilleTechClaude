@@ -1,0 +1,30 @@
+# LangGraph et dépendances principales
+langgraph>=0.0.40
+langchain>=0.1.0
+langchain-openai>=0.1.0
+
+# Base de données
+# sqlite3 est inclus avec Python
+
+# Web scraping et APIs
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+feedparser>=6.0.10
+
+# ArXiv API
+arxiv>=1.4.0
+
+# GitHub API
+PyGithub>=1.59.0
+
+# Configuration
+python-dotenv>=1.0.0
+
+# Traitement de texte
+nltk>=3.8.0
+
+# Dates et temps
+python-dateutil>=2.8.0
+
+# Logging
+loguru>=0.7.0
