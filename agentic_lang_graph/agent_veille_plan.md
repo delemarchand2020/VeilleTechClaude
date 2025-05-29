@@ -14,7 +14,7 @@ Agent Collecteur Tech → Agent Analyse Tech → Agent Synthétiseur
 
 ---
 
-## ✅ Éléments complétés (Phase 1)
+## ✅ Éléments complétés (Phase 1 + Phase 2 partiels)
 
 ### 1. Architecture de base
 - [x] **Structure du projet** : Organisation des dossiers et fichiers mise en place
@@ -25,14 +25,24 @@ Agent Collecteur Tech → Agent Analyse Tech → Agent Synthétiseur
 - [x] **Développement complet** : Connecteur Medium fonctionnel
 - [x] **Tests associés** : Tests unitaires et d'intégration du connecteur Medium
 
-### 3. Infrastructure de tests
+### 3. Connecteur ArXiv
+- [x] **Développement complet** : Connecteur ArXiv fonctionnel avec API officielle
+- [x] **Tests associés** : Tests unitaires du connecteur ArXiv
+- [x] **Fonctionnalités avancées** : 
+  - Recherche par catégories (cs.AI, cs.CL, cs.LG, etc.)
+  - Recherche par mots-clés dans titres et abstracts
+  - Parsing XML complet avec métadonnées
+  - Accès aux PDFs des papers
+  - Gestion des dates et filtrage temporel
+
+### 4. Infrastructure de tests
 - [x] **Configuration pytest** : Mise en place complète avec `pytest.ini`
 - [x] **Scripts de test** : `run_tests.py` et `dev.bat` fonctionnels
 - [x] **Markers de test** : Système de catégorisation des tests (unit, integration, connector, slow, external)
 - [x] **Coverage** : Système de couverture de code avec génération HTML
 - [x] **Fixtures** : Configuration partagée dans `conftest.py`
 
-### 4. Structure technique
+### 5. Structure technique
 - **Framework** : LangGraph
 - **LLM** : OpenAI GPT-4o/GPT-4o-mini
 - **Base de données** : SQLite
@@ -43,9 +53,9 @@ Agent Collecteur Tech → Agent Analyse Tech → Agent Synthétiseur
 ## 🚧 État actuel selon la roadmap
 
 - [x] **Phase 1** : Architecture de base et modèles de données ✅ **TERMINÉE**
-- [ ] **Phase 2** : Agent Collecteur Tech (sources multiples) 🔄 **EN COURS**
+- [x] **Phase 2** : Agent Collecteur Tech (sources multiples) 🔄 **50% TERMINÉ**
   - [x] Connecteur Medium ✅
-  - [ ] Connecteur ArXiv
+  - [x] Connecteur ArXiv ✅ **NOUVEAU**
   - [ ] Connecteur GitHub
   - [ ] Connecteur Towards Data Science
 - [ ] **Phase 3** : Agent Analyse Tech (filtrage expert) ⏳ **À FAIRE**
@@ -57,9 +67,8 @@ Agent Collecteur Tech → Agent Analyse Tech → Agent Synthétiseur
 
 ### Immediate (Phase 2 - continuation)
 1. **Développer les connecteurs manquants** :
-   - Connecteur ArXiv
-   - Connecteur GitHub
-   - Connecteur Towards Data Science
+   - Connecteur GitHub (repos, releases, trending)
+   - Connecteur Towards Data Science (si différent de Medium)
 
 2. **Finaliser l'Agent Collecteur Tech** :
    - Intégration de tous les connecteurs
@@ -86,11 +95,16 @@ Agent Collecteur Tech → Agent Analyse Tech → Agent Synthétiseur
 ├── src/
 │   ├── agents/          # Agents LangGraph (à développer)
 │   ├── models/          # Modèles de données ✅
-│   ├── connectors/      # Connecteurs (Medium ✅, autres à faire)
+│   ├── connectors/      # Connecteurs
+│   │   ├── medium_connector.py ✅
+│   │   ├── arxiv_connector.py ✅ NOUVEAU
+│   │   └── base_connector.py ✅
 │   └── utils/           # Configuration et utilitaires ✅
 ├── data/                # Base de données SQLite ✅
 ├── output/reports/      # Rapports générés (à développer)
 ├── tests/               # Tests complets ✅
+│   ├── test_medium_connector.py ✅
+│   └── test_arxiv_connector.py ✅ NOUVEAU
 ├── main.py             # Point d'entrée (à finaliser)
 └── requirements.txt    # Dépendances ✅
 ```
@@ -110,10 +124,20 @@ cp .env.example .env
 ```bash
 # Tous les tests
 python run_tests.py
+# Tests des connecteurs seulement
+python run_tests.py --connector
 # Tests rapides uniquement
 python run_tests.py --fast
 # Tests avec couverture
 python run_tests.py --coverage --html
+```
+
+### Test manuel des connecteurs
+```bash
+# Test Medium
+python test_medium_manual.py
+# Test ArXiv
+python test_arxiv_manual.py
 ```
 
 ---
@@ -121,15 +145,32 @@ python run_tests.py --coverage --html
 ## 📝 Notes importantes
 
 1. **Connecteur Medium** : Pleinement fonctionnel avec tests complets
-2. **Infrastructure de test** : Robuste et bien organisée, prête pour la suite
-3. **Prochaine priorité** : Développement des connecteurs ArXiv, GitHub et Towards Data Science
-4. **Architecture** : Base solide établie, prête pour l'ajout des agents suivants
+2. **Connecteur ArXiv** : **NOUVEAU** - Pleinement fonctionnel avec :
+   - API officielle ArXiv (gratuite, stable)
+   - Recherche par catégories académiques (cs.AI, cs.CL, etc.)
+   - Parsing XML complet avec métadonnées complètes
+   - Accès aux PDFs et informations de publication
+   - Filtrage temporel et par mots-clés avancé
+3. **Infrastructure de test** : Robuste et bien organisée, étendue pour ArXiv
+4. **Prochaine priorité** : Connecteur GitHub puis finalisation de l'Agent Collecteur
+5. **Architecture** : Base solide établie, 50% de la Phase 2 terminée
 
 ---
 
 ## 🔄 Pour reprendre le travail
 
 1. **Vérifier l'environnement** : S'assurer que toutes les dépendances sont installées
-2. **Lancer les tests** : `python run_tests.py` pour vérifier que tout fonctionne
-3. **Continuer Phase 2** : Développer les connecteurs manquants (ArXiv en priorité)
-4. **Maintenir la qualité** : Écrire les tests pour chaque nouveau connecteur
+2. **Lancer les tests** : `python run_tests.py --connector` pour vérifier les deux connecteurs
+3. **Continuer Phase 2** : Développer le connecteur GitHub en priorité
+4. **Tests manuels** : Utiliser `test_arxiv_manual.py` pour vérifier ArXiv
+5. **Maintenir la qualité** : Écrire les tests pour chaque nouveau connecteur
+
+---
+
+## 🆕 Nouveautés de cette session
+
+- ✅ **Connecteur ArXiv complet** développé et testé
+- ✅ **Tests ArXiv** avec couverture des fonctionnalités principales
+- ✅ **Documentation technique** complète du connecteur ArXiv
+- ✅ **Integration** dans l'architecture existante
+- 📈 **Progression** : Phase 2 maintenant à 50% (2/4 connecteurs terminés)
