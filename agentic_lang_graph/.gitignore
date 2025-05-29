@@ -48,6 +48,15 @@ Thumbs.db
 # Logs
 *.log
 logs/
+tests/logs/*.log
+
+# Tests et couverture de code
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+.tox/
+.cache
 
 # Output files
 output/reports/*.md

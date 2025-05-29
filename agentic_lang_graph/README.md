@@ -67,12 +67,49 @@ python main.py
 - [ ] **Phase 3** : Agent Analyse Tech (filtrage expert)
 - [ ] **Phase 4** : Agent Synthétiseur (rapports Markdown)
 
-## 🧪 Technologies
+## 🧪 Tests
+
+### Exécution des tests
+
+```bash
+# Tous les tests
+python run_tests.py
+# ou
+dev.bat test
+
+# Tests unitaires seulement
+python run_tests.py --unit
+# ou
+dev.bat test-unit
+
+# Tests avec couverture de code
+python run_tests.py --coverage --html
+# ou
+dev.bat test-coverage
+
+# Tests rapides (sans les lents)
+python run_tests.py --fast
+```
+
+### Structure des tests
+- `tests/test_*.py` : Tests unitaires et d'intégration
+- `conftest.py` : Configuration partagée et fixtures
+- `pytest.ini` : Configuration de pytest
+
+### Markers disponibles
+- `@pytest.mark.unit` : Tests unitaires rapides
+- `@pytest.mark.integration` : Tests d'intégration
+- `@pytest.mark.connector` : Tests spécifiques aux connecteurs
+- `@pytest.mark.slow` : Tests lents (peuvent être skippés)
+- `@pytest.mark.external` : Tests nécessitant Internet
+
+## 🛠️ Technologies
 
 - **Framework** : LangGraph
 - **LLM** : OpenAI GPT-4o/GPT-4o-mini
 - **Base de données** : SQLite
 - **Sources** : Medium, ArXiv, GitHub, Towards Data Science
+- **Tests** : pytest, pytest-asyncio, pytest-cov
 
 ## 📝 Notes de développement
 

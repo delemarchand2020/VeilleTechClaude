@@ -1,111 +1,135 @@
-# Solution Agent de Veille Intelligente - Plan de Conception
+# État d'avancement du projet Agent de Veille Intelligente
 
-## 1. Problématique Identifiée
+**Date de dernière mise à jour** : 29 mai 2025
 
-### Contexte utilisateur
-- **Profil** : Expert technique IA+informatique, spécialisé en optimisation de processus manuels avec GenAI
-- **Objectif** : Devenir UNE référence technique/business sur GenAI/Agentic pour décrocher un poste dans un grand groupe parisien
-- **Domaine de veille** : Technologies GenAI, agentic, LLM, solutions d'automatisation intelligente
+## 📊 Vue d'ensemble du projet
 
-### Problèmes actuels
-- **Volume** : Trop de notifications d'infos (email Medium quotidien 6h)
-- **Qualité** : Beaucoup d'articles inutiles (trop basiques, trop théoriques, ou redondants)  
-- **Traduction** : Jargon technique traduit à tort, perturbant la compréhension
-- **Temps** : Seulement 30min/jour disponibles, accumulation frustrante en fin de semaine
-- **Sources limitées** : Une seule source (Medium) = manque d'autres contenus pertinents
-- **Pas de synthèse** : Impression de "voir passer" sans vraiment apprendre
+### Objectif principal
+Création d'un agent intelligent basé sur LangGraph pour automatiser la veille technologique sur GenAI/Agentic/LLM avec production d'un digest quotidien des 3 articles les plus pertinents.
 
-### Besoins exprimés
-- Contenu technique mais accessible, avec profondeur
-- Nouveautés vs recyclage
-- Cas concrets pour approfondir si pertinent  
-- Synthèse d'apprentissages hebdomadaires
-- Sources multiples (académique + business)
-
-## 2. Vision Solution
-
-### Double objectif stratégique
-1. **Résoudre le problème de veille** : Optimiser le processus de veille personnelle
-2. **Créer un démonstrateur** : Showcaser les compétences d'automatisation de processus avec GenAI
-
-### Concept général
-Agent de Veille Intelligente qui automatise la collecte, l'analyse et la synthèse d'informations sur 2 flux complémentaires :
-- **Flux Technologique** : Avancées GenAI/Agentic (recherche + applications)
-- **Flux Marché** : Besoins des entreprises parisiennes (opportunités + tendances)
-
-## 3. Architecture Retenue
-
-### Vue d'ensemble
+### Architecture cible
 ```
-Agent Collecteur Tech → Agent Analyse Tech ↘
-                                            Agent Synthétiseur
-Agent Collecteur Marché → Agent Matching Marché ↗
+Agent Collecteur Tech → Agent Analyse Tech → Agent Synthétiseur
 ```
 
-### Définition des agents
+---
 
-#### Agent Collecteur Tech
-- **Objectif** : Identifier contenus techniques récents sur GenAI/Agentic/Automatisation
-- **Livrables** : Liste d'articles/papers avec métadonnées (source, date, niveau technique, mots-clés)
+## ✅ Éléments complétés (Phase 1)
 
-#### Agent Collecteur Marché  
-- **Objectif** : Identifier besoins/tendances du marché parisien GenAI
-- **Livrables** : Offres d'emploi, posts LinkedIn RH, rapports sectoriels avec compétences extraites
+### 1. Architecture de base
+- [x] **Structure du projet** : Organisation des dossiers et fichiers mise en place
+- [x] **Modèles de données** : Structures de base définies
+- [x] **Configuration de base** : Variables d'environnement et configuration initiale
 
-#### Agent Analyse Tech
-- **Objectif** : Filtrer et classifier contenus selon profil expert
-- **Livrables** : Top contenus classés "Découverte" vs "Raffinement" avec scores + résumés techniques
+### 2. Connecteur Medium
+- [x] **Développement complet** : Connecteur Medium fonctionnel
+- [x] **Tests associés** : Tests unitaires et d'intégration du connecteur Medium
 
-#### Agent Matching Marché
-- **Objectif** : Identifier compétences émergentes/récurrentes et gaps potentiels  
-- **Livrables** : Analyse compétences demandées, tendances marché, recommandations développement
+### 3. Infrastructure de tests
+- [x] **Configuration pytest** : Mise en place complète avec `pytest.ini`
+- [x] **Scripts de test** : `run_tests.py` et `dev.bat` fonctionnels
+- [x] **Markers de test** : Système de catégorisation des tests (unit, integration, connector, slow, external)
+- [x] **Coverage** : Système de couverture de code avec génération HTML
+- [x] **Fixtures** : Configuration partagée dans `conftest.py`
 
-#### Agent Synthétiseur
-- **Objectif** : Produire livrables finaux en croisant les 2 flux
-- **Livrables** : Digest quotidien (top 3), synthèse hebdo d'apprentissage, insights croisés
+### 4. Structure technique
+- **Framework** : LangGraph
+- **LLM** : OpenAI GPT-4o/GPT-4o-mini
+- **Base de données** : SQLite
+- **Tests** : pytest + pytest-asyncio + pytest-cov
 
-### Influences croisées entre flux
-- **Marché → Tech** : Prioriser sujets techniques selon demandes du marché parisien
-- **Tech → Marché** : Surveiller adoption des nouvelles techniques émergentes
+---
 
-## 4. Stratégie de Développement
+## 🚧 État actuel selon la roadmap
 
-### MVP (Version 1)
-**Scope réduit** : Résoudre le problème principal de veille technique
+- [x] **Phase 1** : Architecture de base et modèles de données ✅ **TERMINÉE**
+- [ ] **Phase 2** : Agent Collecteur Tech (sources multiples) 🔄 **EN COURS**
+  - [x] Connecteur Medium ✅
+  - [ ] Connecteur ArXiv
+  - [ ] Connecteur GitHub
+  - [ ] Connecteur Towards Data Science
+- [ ] **Phase 3** : Agent Analyse Tech (filtrage expert) ⏳ **À FAIRE**
+- [ ] **Phase 4** : Agent Synthétiseur (rapports Markdown) ⏳ **À FAIRE**
 
-**Agents MVP :**
-- **Agent Collecteur Tech** : Medium + 1 source supplémentaire (arXiv ou blog tech)
-- **Agent Analyse Tech** : Filtre niveau expert, détecte nouveauté, traduit préservant jargon
-- **Agent Synthétiseur** : Mode simple, traite uniquement flux tech, produit top 3 quotidien
+---
 
-**Livrable MVP :** Email quotidien avec 3 articles pertinents + résumés courts + option approfondissement
+## 🎯 Prochaines étapes prioritaires
 
-### V2 (Version Complète)
-**Ajouts :**
-- Agent Collecteur Marché
-- Agent Matching Marché  
-- Agent Synthétiseur évolué (croisement des 2 flux)
-- Sources multiples
-- Synthèse hebdomadaire
-- Interface web potentielle
+### Immediate (Phase 2 - continuation)
+1. **Développer les connecteurs manquants** :
+   - Connecteur ArXiv
+   - Connecteur GitHub
+   - Connecteur Towards Data Science
 
-**Livrables V2 :** Digest quotidien enrichi + synthèse hebdo + insights croisés marché/tech
+2. **Finaliser l'Agent Collecteur Tech** :
+   - Intégration de tous les connecteurs
+   - Tests d'intégration globaux
+   - Gestion des erreurs et de la robustesse
 
-## 5. Prochaines Étapes
+### À moyen terme (Phase 3)
+3. **Agent Analyse Tech** :
+   - Système de filtrage selon profil expert
+   - Algorithme de classement et priorisation
+   - Tests de performance du système d'analyse
 
-1. **Conception technique MVP** : Stack technologique, APIs, architecture système
-2. **Implémentation MVP** : Développement itératif avec tests utilisateur
-3. **Validation MVP** : Test sur 2-3 semaines d'usage réel
-4. **Évolution vers V2** : Ajout flux marché selon retours MVP
+### À long terme (Phase 4)
+4. **Agent Synthétiseur** :
+   - Génération de rapports Markdown
+   - Système de digest quotidien
+   - Interface de commande finale
 
-## 6. Valeur Business
+---
 
-### Pour l'utilisateur
-- Gain de temps significatif (optimisation 30min quotidiennes)
-- Amélioration qualité de veille (contenu plus pertinent)
-- Montée en compétence accélérée (apprentissage ciblé)
+## 📁 Structure actuelle du projet
 
-### Pour le positionnement professionnel  
-- Démonstrateur concret d'automatisation de processus
-- Proof of concept d'usage GenAI en contexte business
-- Case study présentable en entretien d'embauche
+```
+├── src/
+│   ├── agents/          # Agents LangGraph (à développer)
+│   ├── models/          # Modèles de données ✅
+│   ├── connectors/      # Connecteurs (Medium ✅, autres à faire)
+│   └── utils/           # Configuration et utilitaires ✅
+├── data/                # Base de données SQLite ✅
+├── output/reports/      # Rapports générés (à développer)
+├── tests/               # Tests complets ✅
+├── main.py             # Point d'entrée (à finaliser)
+└── requirements.txt    # Dépendances ✅
+```
+
+---
+
+## 🔧 Configuration et utilisation
+
+### Installation
+```bash
+pip install -r requirements.txt
+cp .env.example .env
+# Configurer OPENAI_API_KEY et GITHUB_TOKEN dans .env
+```
+
+### Tests
+```bash
+# Tous les tests
+python run_tests.py
+# Tests rapides uniquement
+python run_tests.py --fast
+# Tests avec couverture
+python run_tests.py --coverage --html
+```
+
+---
+
+## 📝 Notes importantes
+
+1. **Connecteur Medium** : Pleinement fonctionnel avec tests complets
+2. **Infrastructure de test** : Robuste et bien organisée, prête pour la suite
+3. **Prochaine priorité** : Développement des connecteurs ArXiv, GitHub et Towards Data Science
+4. **Architecture** : Base solide établie, prête pour l'ajout des agents suivants
+
+---
+
+## 🔄 Pour reprendre le travail
+
+1. **Vérifier l'environnement** : S'assurer que toutes les dépendances sont installées
+2. **Lancer les tests** : `python run_tests.py` pour vérifier que tout fonctionne
+3. **Continuer Phase 2** : Développer les connecteurs manquants (ArXiv en priorité)
+4. **Maintenir la qualité** : Écrire les tests pour chaque nouveau connecteur
