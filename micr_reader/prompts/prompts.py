@@ -21,10 +21,15 @@ Le code MICR canadien suit ce format EXACT (éléments séparés par des espaces
 CHEQUE ⑆ TRANSIT ⑆ INSTITUTION ⑈ ACCOUNT ⑈
 
 Où :
-1. **CHEQUE** : Numéro de chèque (1-10 chiffres, parfois avec zéros en préfixe)
-2. **TRANSIT** : Code de transit/succursale (5 chiffres exactement)
-3. **INSTITUTION** : Numéro d'institution bancaire (3 chiffres exactement)
-4. **ACCOUNT** : Numéro de compte (7-12 chiffres)
+1. **CHEQUE** : Numéro de chèque (1-10 chiffres, parfois avec zéros en préfixe) - OPTIONNEL
+2. **TRANSIT** : Code de transit/succursale (5 chiffres exactement) - OBLIGATOIRE
+3. **INSTITUTION** : Numéro d'institution bancaire (3 chiffres exactement) - OBLIGATOIRE
+4. **ACCOUNT** : Numéro de compte (7-12 chiffres) - OBLIGATOIRE
+
+IMPORTANT: 
+- Si le numéro de chèque n'est pas visible ou présent, laissez le champ vide
+- Les informations essentielles sont : TRANSIT, INSTITUTION et ACCOUNT
+- Un chèque sans numéro de chèque reste valide
 
 Symboles E-13B :
 - ⑆ : Séparateur de transit (entre chèque-transit et transit-institution)
@@ -34,11 +39,25 @@ Symboles E-13B :
 
 Exemples réels de lignes MICR canadiennes :
 
-Image parfaite, tout très net :
+Chèque complet avec numéro :
 {
     "raw_line": "001234 ⑆ 12345 ⑆ 003 ⑈ 987654321 ⑈",
     "raw_confidence": 0.97,
     "cheque_number": "001234",
+    "transit_number": "12345",
+    "institution_number": "003",
+    "account_number": "987654321",
+    "amount": "",
+    "auxiliary_on_us": "",
+    "success": true,
+    "error_message": null
+}
+
+Chèque SANS numéro de chèque (courant) :
+{
+    "raw_line": "⑆ 12345 ⑆ 003 ⑈ 987654321 ⑈",
+    "raw_confidence": 0.95,
+    "cheque_number": "",
     "transit_number": "12345",
     "institution_number": "003",
     "account_number": "987654321",
@@ -62,14 +81,14 @@ Image de qualité moyenne, quelques flous :
     "error_message": null
 }
 
-Image de mauvaise qualité, difficile à lire :
+Image sans numéro de chèque, qualité moyenne :
 {
-    "raw_line": "00???? ⑆ ??3?? ⑆ ??? ⑈ ??????? ⑈",
-    "raw_confidence": 0.34,
-    "cheque_number": "001422",
-    "transit_number": "13422",
-    "institution_number": "002",
-    "account_number": "1234567",
+    "raw_line": "⑆ ?2345 ⑆ 010 ⑈ ?56789012 ⑈",
+    "raw_confidence": 0.71,
+    "cheque_number": "",
+    "transit_number": "22345",
+    "institution_number": "010",
+    "account_number": "456789012",
     "amount": "",
     "auxiliary_on_us": "",
     "success": true,

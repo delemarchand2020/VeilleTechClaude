@@ -362,8 +362,8 @@ class MICRGradioInterface:
         """Crée le tableau de validation"""
         data = [
             ["🏦 Transit", "✅ Valide" if validations.transit_valid else "❌ Invalide", "Format 5 chiffres"],
-            ["🏢 Institution", "✅ Valide" if validations.institution_valid else "❌ Invalide", "Format 3 chiffres + base de données"],
-            ["👤 Compte", "✅ Valide" if validations.account_valid else "❌ Invalide", "3-20 chiffres"],
+            ["🏢 Institution", "✅ Valide" if validations.institution_valid else "❌ Invalide", "Format 3 chiffres"],
+            ["👤 Compte", "✅ Valide" if validations.account_valid else "❌ Invalide", "7-12 chiffres"],
             ["📋 Format global", "✅ Valide" if validations.format_valid else "❌ Invalide", "Standards MICR canadiens"]
         ]
         

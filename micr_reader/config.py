@@ -33,8 +33,9 @@ class MICRConfig:
     institution_length: int = 3          # Institution: exactement 3 chiffres
     min_account_length: int = 7          # Compte: minimum 7 chiffres
     max_account_length: int = 12         # Compte: maximum 12 chiffres
-    min_cheque_length: int = 1           # Chèque: minimum 1 chiffre
-    max_cheque_length: int = 10          # Chèque: maximum 10 chiffres
+    min_cheque_length: int = 1           # Chèque: minimum 1 chiffre (si présent)
+    max_cheque_length: int = 10          # Chèque: maximum 10 chiffres (si présent)
+    cheque_required: bool = False        # Chèque OPTIONNEL - pas obligatoire
 
 @dataclass
 class ImageConfig:
@@ -67,7 +68,8 @@ class Config:
         )
         
         self.micr = MICRConfig(
-            region=os.getenv('MICR_REGION', 'canada')
+            region=os.getenv('MICR_REGION', 'canada'),
+            cheque_required=os.getenv('MICR_CHEQUE_REQUIRED', 'false').lower() == 'true'
         )
         self.image = ImageConfig()
     
@@ -109,7 +111,8 @@ class Config:
                 'min_account_length': self.micr.min_account_length,
                 'max_account_length': self.micr.max_account_length,
                 'min_cheque_length': self.micr.min_cheque_length,
-                'max_cheque_length': self.micr.max_cheque_length
+                'max_cheque_length': self.micr.max_cheque_length,
+                'cheque_required': self.micr.cheque_required
             },
             'image': {
                 'max_file_size_mb': self.image.max_file_size_mb,

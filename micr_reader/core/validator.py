@@ -87,8 +87,8 @@ class MICRValidator:
         # Validation du numéro de compte
         account_valid = self._validate_account(result.account_number, errors, warnings)
         
-        # Validation du numéro de chèque
-        cheque_valid = self._validate_cheque_number_strict(result.cheque_number, errors, warnings)
+        # Validation du numéro de chèque (OPTIONNEL)
+        cheque_valid = self._validate_cheque_number_flexible(result.cheque_number, errors, warnings)
         
         # Validation du format général
         format_valid = self._validate_overall_format(result, errors, warnings)
@@ -96,8 +96,8 @@ class MICRValidator:
         # Validations supplémentaires
         self._validate_consistency(result, warnings)
         
-        # Validation globale
-        is_valid = transit_valid and institution_valid and account_valid and cheque_valid and format_valid
+        # Validation globale - le chèque n'est PAS requis pour la validité globale
+        is_valid = transit_valid and institution_valid and account_valid and format_valid
         
         return ValidationResult(
             is_valid=is_valid,
@@ -139,6 +139,41 @@ class MICRValidator:
         if transit_component.combined_confidence < 0.7:
             warnings.append(f"Confiance faible pour le transit: {transit_component.combined_confidence:.1%}")
         
+        return True
+    
+    def _validate_cheque_number_flexible(self, cheque_component, errors: List[str], warnings: List[str]) -> bool:
+        """Valide le numéro de chèque de manière flexible (optionnel)"""
+        # Si pas de numéro de chèque, c'est OK !
+        if not cheque_component or not cheque_component.value or not cheque_component.value.strip():
+            warnings.append("Aucun numéro de chèque détecté (normal pour certains chèques)")
+            return True  # Pas d'erreur, c'est valide
+        
+        cheque_num = cheque_component.value.strip()
+        
+        # Vérifier que ce sont tous des chiffres
+        if not cheque_num.isdigit():
+            warnings.append(f"Numéro de chèque contient des caractères non-numériques: {cheque_num}")
+            return True  # Warning seulement, pas d'erreur
+        
+        # Vérifier la longueur selon spécification
+        if len(cheque_num) < self.min_cheque_length:
+            warnings.append(f"Numéro de chèque possiblement trop court: {len(cheque_num)} caractères")
+            return True  # Warning seulement
+        
+        if len(cheque_num) > self.max_cheque_length:
+            warnings.append(f"Numéro de chèque possiblement trop long: {len(cheque_num)} caractères")
+            return True  # Warning seulement
+        
+        # Vérifications de plausibilité
+        if cheque_num == '0' * len(cheque_num):
+            warnings.append("Numéro de chèque suspect: que des zéros")
+            return True  # Warning seulement
+        
+        # Avertissement pour confiance faible
+        if cheque_component.combined_confidence < 0.7:
+            warnings.append(f"Confiance faible pour le chèque: {cheque_component.combined_confidence:.1%}")
+        
+        # Si on arrive ici, le chèque semble valide
         return True
     
     def _validate_cheque_number_strict(self, cheque_component, errors: List[str], warnings: List[str]) -> bool:
