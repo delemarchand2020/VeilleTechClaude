@@ -262,7 +262,7 @@ def main():
     
     # Chemin vers votre image de test
     # Modifiez ce chemin pour pointer vers votre chèque
-    IMAGE_PATH = "exemple_cheque.jpg"  # Remplacez par votre image
+    IMAGE_PATH = "./examples/specheck1.png"  # Remplacez par votre image
     
     # Vérifier que l'image existe
     if not os.path.exists(IMAGE_PATH):

@@ -122,48 +122,24 @@ Où:
 - CHEQUE NUMBER: numéro du chèque
 - Les symboles ⑆ et ⑈ sont des caractères de contrôle MICR
 
+IMPORTANT: Dans votre réponse JSON, utilisez EXACTEMENT les chiffres que vous voyez, sans espaces ni formatage supplémentaire.
+
 Fournissez votre réponse UNIQUEMENT en format JSON avec cette structure exacte:
 {
     "raw_line": "ligne MICR complète telle que lue",
     "raw_confidence": 0.95,
-    "components": {
-        "transit_number": {
-            "value": "12345",
-            "confidence": 0.98,
-            "description": "Numéro de transit/succursale"
-        },
-        "institution_number": {
-            "value": "123",
-            "confidence": 0.97,
-            "description": "Numéro d'institution bancaire"
-        },
-        "account_number": {
-            "value": "1234567890",
-            "confidence": 0.95,
-            "description": "Numéro de compte"
-        },
-        "cheque_number": {
-            "value": "001",
-            "confidence": 0.99,
-            "description": "Numéro du chèque"
-        },
-        "amount": {
-            "value": "0000012345",
-            "confidence": 0.85,
-            "description": "Montant encodé (si présent)"
-        },
-        "auxiliary_on_us": {
-            "value": "",
-            "confidence": 0.0,
-            "description": "Données auxiliaires (si présentes)"
-        }
-    },
+    "transit_number": "12345",
+    "institution_number": "010",
+    "account_number": "1234567890",
+    "cheque_number": "001",
+    "amount": "",
+    "auxiliary_on_us": "",
     "success": true,
     "error_message": null
 }
 
 Évaluez la confiance de 0.0 à 1.0 basée sur la clarté et la lisibilité de chaque élément.
-Si un élément n'est pas visible ou présent, utilisez une valeur vide et confidence 0.0.
+Si un élément n'est pas visible ou présent, utilisez une valeur vide.
 Si l'analyse échoue complètement, retournez success: false avec un message d'erreur.
 """
     
@@ -178,27 +154,78 @@ Si l'analyse échoue complètement, retournez success: false avec un message d'e
             response_text = self._clean_json_response(response_text)
             result_data = json.loads(response_text)
             
-            # Créer les composants avec confiance améliorée
-            components_data = result_data.get("components", {})
+            # Créer les composants avec confiance améliorée - NOUVEAU FORMAT
+            if not result_data.get("success", False):
+                return MICRResult(
+                    raw_line="",
+                    raw_confidence=0.0,
+                    success=False,
+                    error_message=result_data.get("error_message", "Analyse échouée"),
+                    processing_time=time.time() - start_time,
+                    image_path=image_path
+                )
             
-            # Pré-validation pour ajuster les confiances
-            temp_result = self._create_temp_result(result_data, image_path, start_time)
+            # Créer les composants basiques d'abord
+            basic_components = {
+                "transit_number": self._create_basic_component_new_format(
+                    result_data.get("transit_number", ""), ComponentType.TRANSIT, logprobs_data
+                ),
+                "institution_number": self._create_basic_component_new_format(
+                    result_data.get("institution_number", ""), ComponentType.INSTITUTION, logprobs_data
+                ),
+                "account_number": self._create_basic_component_new_format(
+                    result_data.get("account_number", ""), ComponentType.ACCOUNT, logprobs_data
+                ),
+                "cheque_number": self._create_basic_component_new_format(
+                    result_data.get("cheque_number", ""), ComponentType.CHEQUE, logprobs_data
+                ),
+                "amount": self._create_basic_component_new_format(
+                    result_data.get("amount", ""), ComponentType.AMOUNT, logprobs_data
+                ),
+                "auxiliary_on_us": self._create_basic_component_new_format(
+                    result_data.get("auxiliary_on_us", ""), ComponentType.AUXILIARY, logprobs_data
+                )
+            }
+            
+            # Créer un résultat temporaire pour validation
+            temp_result = MICRResult(
+                raw_line=result_data.get("raw_line", ""),
+                raw_confidence=result_data.get("raw_confidence", 0.0),
+                success=True,
+                processing_time=time.time() - start_time,
+                image_path=image_path,
+                **basic_components
+            )
+            
+            # Valider et ajuster les confiances
             validations = self.validator.validate_canadian_micr(temp_result)
             
-            # Créer les composants finaux avec validations
-            final_components = self._create_final_components(
-                components_data, logprobs_data, validations
-            )
+            # Mettre à jour les validation_passed des composants
+            if basic_components["transit_number"]:
+                basic_components["transit_number"].validation_passed = validations.transit_valid
+            if basic_components["institution_number"]:
+                basic_components["institution_number"].validation_passed = validations.institution_valid
+            if basic_components["account_number"]:
+                basic_components["account_number"].validation_passed = validations.account_valid
+            
+            # Recalculer les confiances avec validation
+            for comp_name, component in basic_components.items():
+                if component:
+                    component.combined_confidence = self.confidence_calculator.combine_confidences(
+                        component.llm_confidence,
+                        component.logprob_confidence,
+                        component.validation_passed
+                    )
             
             # Construire le résultat final
             return MICRResult(
                 raw_line=result_data.get("raw_line", ""),
                 raw_confidence=result_data.get("raw_confidence", 0.0),
-                success=result_data.get("success", False),
-                error_message=result_data.get("error_message"),
+                success=True,
+                error_message=None,
                 processing_time=time.time() - start_time,
                 image_path=image_path,
-                **final_components
+                **basic_components
             )
             
         except json.JSONDecodeError as e:
@@ -229,6 +256,59 @@ Si l'analyse échoue complètement, retournez success: false avec un message d'e
             response_text = response_text[3:-3]
         
         return response_text.strip()
+    
+    def _create_basic_component_new_format(self, value: str, comp_type: ComponentType, logprobs_data) -> Optional[MICRComponent]:
+        """Crée un composant MICR avec le nouveau format de réponse"""
+        if not value or not value.strip():
+            return None
+        
+        value = value.strip()
+        
+        # Confiance LLM par défaut basée sur la présence de la valeur
+        llm_confidence = 0.9  # Confiance par défaut si la valeur est présente
+        
+        # Calculer la confiance logprobs
+        logprob_confidence = 0.0
+        if logprobs_data:
+            try:
+                logprobs_dict = logprobs_data.dict() if hasattr(logprobs_data, 'dict') else logprobs_data
+                logprob_confidence = self.confidence_calculator.calculate_logprob_confidence(
+                    logprobs_dict, value
+                )
+            except Exception as e:
+                print(f"Erreur calcul logprobs pour {comp_type.value}: {e}")
+                # En cas d'erreur, utiliser une heuristique basée sur la longueur et le contenu
+                if value.isdigit() and len(value) > 0:
+                    logprob_confidence = 0.7  # Confiance par défaut pour chiffres valides
+                else:
+                    logprob_confidence = 0.3
+        
+        # Confiance combinée initiale (sera recalculée après validation)
+        combined_confidence = self.confidence_calculator.combine_confidences(
+            llm_confidence, logprob_confidence, True  # Assume validation OK initialement
+        )
+        
+        return MICRComponent(
+            value=value,
+            description=self._get_component_description(comp_type),
+            llm_confidence=llm_confidence,
+            logprob_confidence=logprob_confidence,
+            combined_confidence=combined_confidence,
+            component_type=comp_type,
+            validation_passed=True  # Sera mis à jour après validation
+        )
+    
+    def _get_component_description(self, comp_type: ComponentType) -> str:
+        """Retourne la description d'un type de composant"""
+        descriptions = {
+            ComponentType.TRANSIT: "Numéro de transit/succursale",
+            ComponentType.INSTITUTION: "Numéro d'institution bancaire",
+            ComponentType.ACCOUNT: "Numéro de compte",
+            ComponentType.CHEQUE: "Numéro du chèque",
+            ComponentType.AMOUNT: "Montant encodé",
+            ComponentType.AUXILIARY: "Données auxiliaires"
+        }
+        return descriptions.get(comp_type, "Composant MICR")
     
     def _create_temp_result(self, result_data: dict, image_path: str, start_time: float) -> MICRResult:
         """Crée un résultat temporaire pour la validation"""
@@ -261,12 +341,12 @@ Si l'analyse échoue complètement, retournez success: false avec un message d'e
             auxiliary_on_us=create_basic_component(components.get("auxiliary_on_us"), ComponentType.AUXILIARY)
         )
     
-    def _create_final_components(self, components_data: dict, logprobs_data, validations: dict) -> dict:
+    def _create_final_components(self, components_data: dict, logprobs_data, validations) -> dict:
         """Crée les composants finaux avec confiance améliorée"""
         component_mapping = {
-            "transit_number": (ComponentType.TRANSIT, validations.get("transit_valid", True)),
-            "institution_number": (ComponentType.INSTITUTION, validations.get("institution_valid", True)),
-            "account_number": (ComponentType.ACCOUNT, validations.get("account_valid", True)),
+            "transit_number": (ComponentType.TRANSIT, validations.transit_valid),
+            "institution_number": (ComponentType.INSTITUTION, validations.institution_valid),
+            "account_number": (ComponentType.ACCOUNT, validations.account_valid),
             "cheque_number": (ComponentType.CHEQUE, True),
             "amount": (ComponentType.AMOUNT, True),
             "auxiliary_on_us": (ComponentType.AUXILIARY, True)

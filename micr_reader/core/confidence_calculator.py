@@ -151,7 +151,7 @@ class ConfidenceCalculator:
     
     def _approximate_logprob_confidence(self, tokens: List[str], token_logprobs: List[float], target_text: str) -> float:
         """
-        Calcule une confiance approximative avec recherche fuzzy
+        Calcule une confiance approximative avec recherche fuzzy améliorée
         
         Examples:
             # Stratégie 1: Correspondance de sous-chaînes
@@ -172,21 +172,45 @@ class ConfidenceCalculator:
         clean_target = ''.join(c for c in target_text if c.isalnum())
         relevant_logprobs = []
         
+        # NOUVELLE Stratégie 0: Recherche de séquences complètes dans les tokens
+        for i, token in enumerate(tokens):
+            if i >= len(token_logprobs) or token_logprobs[i] is None:
+                continue
+            
+            # Chercher le target_text complet dans le token (avec variations)
+            clean_token = ''.join(c for c in token if c.isalnum())
+            if clean_token == clean_target:
+                # Correspondance exacte trouvée!
+                return min(math.exp(token_logprobs[i]), 1.0)
+        
         # Stratégie 1: Correspondances de sous-chaînes
+        substring_matches = []
         for i, token in enumerate(tokens):
             if i >= len(token_logprobs) or token_logprobs[i] is None:
                 continue
                 
             clean_token = ''.join(c for c in token if c.isalnum())
             
-            # Si le token contient une partie du texte cible ou vice versa
-            if (clean_token and clean_target and 
-                (clean_token in clean_target or clean_target in clean_token)):
-                relevant_logprobs.append(token_logprobs[i])
+            # Si le token contient une partie significative du texte cible
+            if clean_token and clean_target:
+                if clean_token in clean_target or clean_target in clean_token:
+                    substring_matches.append((token_logprobs[i], len(clean_token)))
+                elif len(clean_token) >= 2 and any(clean_token in clean_target[j:j+len(clean_token)] for j in range(len(clean_target)-len(clean_token)+1)):
+                    substring_matches.append((token_logprobs[i], len(clean_token)))
         
-        # Stratégie 2: Si pas de correspondance, chercher des chiffres similaires
-        if not relevant_logprobs and any(c.isdigit() for c in target_text):
-            target_digits = ''.join(c for c in target_text if c.isdigit())
+        if substring_matches:
+            # Pondérer par la longueur des correspondances
+            total_weight = sum(weight for _, weight in substring_matches)
+            if total_weight > 0:
+                weighted_logprob = sum(logprob * weight for logprob, weight in substring_matches) / total_weight
+                confidence = min(math.exp(weighted_logprob), 1.0)
+                if confidence > 0.1:  # Seuil minimum pour considérer comme valide
+                    return confidence
+        
+        # Stratégie 2: Correspondance de chiffres individuels pour les nombres
+        if clean_target.isdigit() and len(clean_target) >= 3:
+            target_digits = list(clean_target)
+            digit_matches = []
             
             for i, token in enumerate(tokens):
                 if i >= len(token_logprobs) or token_logprobs[i] is None:
@@ -194,32 +218,45 @@ class ConfidenceCalculator:
                     
                 token_digits = ''.join(c for c in token if c.isdigit())
                 
-                # Si le token contient des chiffres qui se trouvent dans le target
-                if token_digits and any(digit in target_digits for digit in token_digits):
-                    relevant_logprobs.append(token_logprobs[i])
+                # Vérifier si ce token contient des chiffres de notre séquence
+                if token_digits:
+                    for digit in token_digits:
+                        if digit in target_digits:
+                            digit_matches.append(token_logprobs[i])
+                            break  # Un seul match par token pour éviter la duplication
+            
+            if len(digit_matches) >= len(target_digits) * 0.6:  # Au moins 60% des chiffres trouvés
+                probabilities = [math.exp(logprob) for logprob in digit_matches[:len(target_digits)]]
+                confidence = sum(probabilities) / len(probabilities)
+                if confidence > 0.1:
+                    return min(confidence, 1.0)
         
-        # Stratégie 3: Fallback - tokens numériques généraux
-        if not relevant_logprobs:
-            for i, token in enumerate(tokens):
-                if (i < len(token_logprobs) and token_logprobs[i] is not None and 
-                    any(char.isdigit() for char in token)):
-                    relevant_logprobs.append(token_logprobs[i])
+        # Stratégie 3: Recherche de patterns numériques dans les JSON
+        json_number_pattern = f'\"{clean_target}\"'  # "12345"
+        for i, token in enumerate(tokens):
+            if i >= len(token_logprobs) or token_logprobs[i] is None:
+                continue
+            
+            if clean_target in token or json_number_pattern in token:
+                return min(math.exp(token_logprobs[i]), 1.0)
         
-        if not relevant_logprobs:
-            return 0.3  # Confiance faible par défaut
+        # Stratégie 4: Fallback général - tokens numériques
+        numeric_logprobs = []
+        for i, token in enumerate(tokens):
+            if (i < len(token_logprobs) and token_logprobs[i] is not None and 
+                any(char.isdigit() for char in token) and 
+                len(''.join(c for c in token if c.isdigit())) >= 2):  # Au moins 2 chiffres
+                numeric_logprobs.append(token_logprobs[i])
         
-        # Convertir logprobs en probabilités
-        probabilities = [math.exp(logprob) for logprob in relevant_logprobs]
+        if numeric_logprobs:
+            # Prendre les meilleurs tokens numériques
+            numeric_logprobs.sort(reverse=True)  # Trier par logprob (meilleur = plus proche de 0)
+            best_logprobs = numeric_logprobs[:min(3, len(numeric_logprobs))]  # Top 3
+            probabilities = [math.exp(logprob) for logprob in best_logprobs]
+            return sum(probabilities) / len(probabilities)
         
-        # Moyenne pondérée: donner plus de poids aux meilleures probabilités
-        probabilities.sort(reverse=True)
-        if len(probabilities) > 1:
-            # 60% meilleur token, 40% moyenne du reste
-            best_prob = probabilities[0]
-            avg_rest = sum(probabilities[1:]) / len(probabilities[1:])
-            return 0.6 * best_prob + 0.4 * avg_rest
-        else:
-            return probabilities[0]
+        # Si aucune correspondance trouvée, retourner une confiance très faible
+        return 0.1  # 10% de confiance par défaut plutôt que 0%
     
     def combine_confidences(self, llm_conf: float, logprob_conf: float, validation_passed: bool = True) -> float:
         """
