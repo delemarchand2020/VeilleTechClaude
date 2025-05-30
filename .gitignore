@@ -74,3 +74,5 @@ data/*.xml
 /keys.txt
 /micr_reader/test_logprobs_structure.py
 /micr_reader/temp_function_backup.py
+/micr_reader/.gradio/certificate.pem
+/micr_reader/cleanup_project.py
