@@ -4,8 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="21e7212a-badb-4680-96ea-d52e522dac99" name="Changes" comment="implementation second connecteur">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="21e7212a-badb-4680-96ea-d52e522dac99" name="Changes" comment="micr demo">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -119,7 +119,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748522698461</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="micr demo">
+      <option name="closed" value="true" />
+      <created>1748614274729</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1748614274729</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -127,6 +135,7 @@
     <MESSAGE value="implementation premier connecteur" />
     <MESSAGE value="implementation tests premier connecteur" />
     <MESSAGE value="implementation second connecteur" />
-    <option name="LAST_COMMIT_MESSAGE" value="implementation second connecteur" />
+    <MESSAGE value="micr demo" />
+    <option name="LAST_COMMIT_MESSAGE" value="micr demo" />
   </component>
 </project>

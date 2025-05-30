@@ -71,3 +71,4 @@ data/*.xml
 !agentic_lang_graph/data/.gitkeep
 
 .idea/*
+/keys.txt
