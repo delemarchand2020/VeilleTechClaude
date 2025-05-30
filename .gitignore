@@ -72,3 +72,5 @@ data/*.xml
 
 .idea/*
 /keys.txt
+/micr_reader/test_logprobs_structure.py
+/micr_reader/temp_function_backup.py

@@ -5,10 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="21e7212a-badb-4680-96ea-d52e522dac99" name="Changes" comment="micr demo">
-      <change afterPath="$PROJECT_DIR$/micr_reader/examples/specheck1.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/micr_reader/core/confidence_calculator.py" beforeDir="false" afterPath="$PROJECT_DIR$/micr_reader/core/confidence_calculator.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/micr_reader/core/micr_analyzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/micr_reader/core/micr_analyzer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/micr_reader/examples/basic_usage.py" beforeDir="false" afterPath="$PROJECT_DIR$/micr_reader/examples/basic_usage.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -139,7 +139,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748614651803</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="micr demo">
+      <option name="closed" value="true" />
+      <created>1748616512176</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1748616512176</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">

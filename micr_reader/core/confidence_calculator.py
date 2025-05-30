@@ -28,70 +28,103 @@ class ConfidenceCalculator:
             self.logprob_weight = config.confidence.logprob_weight
             self.validation_weight = config.confidence.validation_weight
     
-    def calculate_logprob_confidence(self, logprobs_data: Dict, target_text: str) -> float:
+    def calculate_logprob_confidence(self, logprobs_data, target_text: str) -> float:
         """
-        Calcule la confiance basée sur les logprobs pour un texte donné
+        Calcule la confiance basée sur les logprobs pour un texte donné - FORMAT OPENAI v1.0+
         
         Args:
-            logprobs_data: Données logprobs d'OpenAI
+            logprobs_data: Données logprobs d'OpenAI (ChoiceLogprobs object ou dict)
             target_text: Texte pour lequel calculer la confiance
             
         Returns:
             Score de confiance basé sur les logprobs (0.0 à 1.0)
-            
-        Examples:
-            # Correspondance exacte
-            logprobs = {
-                'tokens': ['{"transit": "', '12345', '", "institution":'],
-                'token_logprobs': [-0.1, -0.2, -0.05]
-            }
-            confidence = calculator.calculate_logprob_confidence(logprobs, "12345")
-            # Résultat: exp(-0.2) ≈ 0.819
-            
-            # Correspondance par reconstruction
-            logprobs = {
-                'tokens': ['"account": "', '987', '654', '321', '"'],
-                'token_logprobs': [-0.05, -0.3, -0.25, -0.4, -0.1]
-            }
-            confidence = calculator.calculate_logprob_confidence(logprobs, "987654321")
-            # Résultat: moyenne_géométrique(0.741, 0.779, 0.670) ≈ 0.729
         """
         if not logprobs_data or not target_text:
             return 0.0
             
         try:
-            # Extraire les tokens et leurs logprobs
-            tokens = logprobs_data.get('tokens', [])
-            token_logprobs = logprobs_data.get('token_logprobs', [])
+            # Nouveau format OpenAI v1.0+ - extraire depuis ChoiceLogprobs
+            tokens = []
+            token_logprobs = []
+            
+            # Debug: afficher la structure pour comprendre
+            print(f"  🔍 Structure logprobs_data: {type(logprobs_data)}")
+            
+            # Gérer différents formats d'entrée
+            content_data = None
+            
+            # Si c'est un objet ChoiceLogprobs direct
+            if hasattr(logprobs_data, 'content'):
+                content_data = logprobs_data.content
+                print(f"  📝 Content direct trouvé, type: {type(content_data)}")
+            
+            # Si c'est un dictionnaire (après .dict())
+            elif isinstance(logprobs_data, dict) and 'content' in logprobs_data:
+                content_data = logprobs_data['content']
+                print(f"  📝 Content depuis dict trouvé, type: {type(content_data)}")
+            
+            else:
+                print(f"  ❌ Pas de content dans logprobs_data")
+                print(f"  🔍 Attributs disponibles: {dir(logprobs_data) if hasattr(logprobs_data, '__dict__') else 'N/A'}")
+                return 0.0
+            
+            # Extraire les tokens et logprobs
+            if content_data and len(content_data) > 0:
+                print(f"  📝 Content trouvé, nombre d'éléments: {len(content_data)}")
+                
+                for i, content_item in enumerate(content_data):
+                    # Gérer objet token ou dictionnaire
+                    token_val = None
+                    logprob_val = None
+                    
+                    if hasattr(content_item, 'token') and hasattr(content_item, 'logprob'):
+                        token_val = content_item.token
+                        logprob_val = content_item.logprob
+                    elif isinstance(content_item, dict):
+                        token_val = content_item.get('token')
+                        logprob_val = content_item.get('logprob')
+                    
+                    if token_val is not None and logprob_val is not None:
+                        tokens.append(token_val)
+                        token_logprobs.append(logprob_val)
+                        if i < 10:  # Debug: afficher les 10 premiers tokens
+                            print(f"    Token {i}: '{token_val}' (logprob: {logprob_val:.3f})")
+                
+                print(f"  ✅ Extracted {len(tokens)} tokens")
+            else:
+                print(f"  ❌ Content vide ou None")
+                return 0.0
             
             if not tokens or not token_logprobs:
+                print(f"  ❌ Tokens ou logprobs vides")
                 return 0.0
             
             # Première tentative: correspondance exacte
             exact_confidence = self._exact_match_confidence(tokens, token_logprobs, target_text)
             if exact_confidence > 0:
+                print(f"  ✅ Correspondance exacte trouvée: {exact_confidence:.3f}")
                 return exact_confidence
             
             # Deuxième tentative: reconstruction de tokens
             reconstruction_confidence = self._reconstruction_confidence(tokens, token_logprobs, target_text)
             if reconstruction_confidence > 0:
+                print(f"  ✅ Correspondance par reconstruction: {reconstruction_confidence:.3f}")
                 return reconstruction_confidence
             
             # Troisième tentative: correspondance approximative
-            return self._approximate_logprob_confidence(tokens, token_logprobs, target_text)
+            approx_confidence = self._approximate_logprob_confidence(tokens, token_logprobs, target_text)
+            print(f"  📊 Correspondance approximative: {approx_confidence:.3f}")
+            return approx_confidence
             
         except Exception as e:
-            print(f"Erreur calcul logprobs: {e}")
+            print(f"  ❌ Erreur dans calculate_logprob_confidence: {e}")
+            import traceback
+            print(f"  📋 Traceback: {traceback.format_exc()}")
             return 0.0
     
     def _exact_match_confidence(self, tokens: List[str], token_logprobs: List[float], target_text: str) -> float:
         """
         Cherche une correspondance exacte du target_text dans les tokens
-        
-        Example:
-            tokens = ['{"transit": "', '12345', '", ']
-            target_text = "12345"
-            # Trouve directement "12345" à l'index 1
         """
         for i, token in enumerate(tokens):
             if i < len(token_logprobs) and token_logprobs[i] is not None:
@@ -107,11 +140,6 @@ class ConfidenceCalculator:
     def _reconstruction_confidence(self, tokens: List[str], token_logprobs: List[float], target_text: str) -> float:
         """
         Tente de reconstruire le target_text à partir de tokens contigus
-        
-        Example:
-            tokens = ['"account": "', '987', '654', '321', '"']
-            target_text = "987654321"
-            # Reconstruit "987" + "654" + "321" = "987654321"
         """
         # Reconstituer le texte à partir des tokens pour trouver la position
         full_text = ''.join(tokens)
@@ -152,25 +180,12 @@ class ConfidenceCalculator:
     def _approximate_logprob_confidence(self, tokens: List[str], token_logprobs: List[float], target_text: str) -> float:
         """
         Calcule une confiance approximative avec recherche fuzzy améliorée
-        
-        Examples:
-            # Stratégie 1: Correspondance de sous-chaînes
-            tokens = ['I see transit', ' ', '123', '45', ' here']
-            target_text = "12345"
-            # "123" contient 1,2,3 de "12345" ✓
-            # "45" contient 4,5 de "12345" ✓
-            
-            # Stratégie 2: Correspondance des chiffres
-            tokens = ['numbers found:', ' ', '1', '2', '3', '4', '5']
-            target_text = "12345"
-            # Chaque chiffre individuel matche ✓
         """
         if not target_text:
             return 0.0
         
         # Nettoyer le texte cible
         clean_target = ''.join(c for c in target_text if c.isalnum())
-        relevant_logprobs = []
         
         # NOUVELLE Stratégie 0: Recherche de séquences complètes dans les tokens
         for i, token in enumerate(tokens):
@@ -232,7 +247,7 @@ class ConfidenceCalculator:
                     return min(confidence, 1.0)
         
         # Stratégie 3: Recherche de patterns numériques dans les JSON
-        json_number_pattern = f'\"{clean_target}\"'  # "12345"
+        json_number_pattern = f'"{clean_target}"'  # "12345"
         for i, token in enumerate(tokens):
             if i >= len(token_logprobs) or token_logprobs[i] is None:
                 continue
@@ -256,28 +271,11 @@ class ConfidenceCalculator:
             return sum(probabilities) / len(probabilities)
         
         # Si aucune correspondance trouvée, retourner une confiance très faible
-        return 0.1  # 10% de confiance par défaut plutôt que 0%
+        return 0.15  # 15% de confiance par défaut plutôt que 0%
     
     def combine_confidences(self, llm_conf: float, logprob_conf: float, validation_passed: bool = True) -> float:
         """
         Combine les différents types de confiance en un score final
-        
-        Args:
-            llm_conf: Confiance subjective du LLM (0.0 à 1.0)
-            logprob_conf: Confiance basée sur les logprobs (0.0 à 1.0)
-            validation_passed: Si la validation du format a réussi
-            
-        Returns:
-            Confiance combinée (0.0 à 1.0)
-            
-        Examples:
-            # Cas optimal
-            combined = calculator.combine_confidences(0.9, 0.85, True)
-            # Résultat: 0.9*0.3 + 0.85*0.6 + 1.0*0.1 = 0.88
-            
-            # Cas avec validation échouée
-            combined = calculator.combine_confidences(0.9, 0.85, False)
-            # Résultat: 0.9*0.3 + 0.85*0.6 + 0.5*0.1 = 0.83
         """
         # Score de validation (binaire converti en score)
         validation_score = 1.0 if validation_passed else 0.5
@@ -292,9 +290,6 @@ class ConfidenceCalculator:
     def analyze_confidence_breakdown(self, llm_conf: float, logprob_conf: float, validation_passed: bool) -> Dict[str, float]:
         """
         Analyse détaillée de la répartition des confiances
-        
-        Returns:
-            Dictionnaire avec la contribution de chaque composant
         """
         validation_score = 1.0 if validation_passed else 0.5
         

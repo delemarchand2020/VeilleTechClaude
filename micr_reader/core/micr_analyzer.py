@@ -271,17 +271,34 @@ Si l'analyse échoue complètement, retournez success: false avec un message d'e
         logprob_confidence = 0.0
         if logprobs_data:
             try:
-                logprobs_dict = logprobs_data.dict() if hasattr(logprobs_data, 'dict') else logprobs_data
+                print(f"🔍 Debug logprobs pour {comp_type.value} = '{value}':")
+                print(f"  Type logprobs_data: {type(logprobs_data)}")
+                
+                # Afficher les attributs disponibles pour debug
+                if hasattr(logprobs_data, '__dict__'):
+                    print(f"  Attributs logprobs_data: {list(logprobs_data.__dict__.keys())}")
+                elif hasattr(logprobs_data, '__dir__'):
+                    attrs = [attr for attr in dir(logprobs_data) if not attr.startswith('_')]
+                    print(f"  Attributs publics: {attrs}")
+                
+                # Passer directement l'objet logprobs à calculate_logprob_confidence
                 logprob_confidence = self.confidence_calculator.calculate_logprob_confidence(
-                    logprobs_dict, value
+                    logprobs_data, value
                 )
+                print(f"  Résultat confiance logprobs: {logprob_confidence:.3f}")
             except Exception as e:
-                print(f"Erreur calcul logprobs pour {comp_type.value}: {e}")
+                print(f"❌ Erreur calcul logprobs pour {comp_type.value}: {e}")
+                print(f"  Type d'erreur: {type(e).__name__}")
+                import traceback
+                print(f"  Traceback: {traceback.format_exc()}")
                 # En cas d'erreur, utiliser une heuristique basée sur la longueur et le contenu
                 if value.isdigit() and len(value) > 0:
                     logprob_confidence = 0.7  # Confiance par défaut pour chiffres valides
                 else:
                     logprob_confidence = 0.3
+                print(f"  Utilisation fallback: {logprob_confidence:.3f}")
+        else:
+            print(f"⚠️  Pas de données logprobs pour {comp_type.value}")
         
         # Confiance combinée initiale (sera recalculée après validation)
         combined_confidence = self.confidence_calculator.combine_confidences(
