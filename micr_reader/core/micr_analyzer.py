@@ -3,6 +3,7 @@
 Analyseur principal MICR utilisant OpenAI GPT-4o
 """
 
+import math
 import json
 import time
 from typing import Optional
@@ -104,45 +105,97 @@ class MICRAnalyzer:
             logprobs=config.openai.logprobs,
             top_logprobs=config.openai.top_logprobs
         )
-    
+
     def _create_micr_prompt(self) -> str:
-        """
-        Crée le prompt spécialisé pour l'analyse MICR des chèques canadiens
-        """
-        return """
-Analysez cette image de chèque canadien et extrayez les informations du code MICR (Magnetic Ink Character Recognition) situé au bas du chèque.
+            """
+            Crée le prompt spécialisé pour l'analyse MICR des chèques canadiens
+            """
+            return """
+    Analysez cette image de chèque canadien et extrayez les informations du code MICR (Magnetic Ink Character Recognition) situé au bas du chèque.
 
-Le code MICR canadien suit généralement ce format:
-⑆TRANSIT⑆INSTITUTION⑈ACCOUNT NUMBER⑈CHEQUE NUMBER⑆
+    Le code MICR canadien suit généralement ce format:
+    ⑆TRANSIT⑆INSTITUTION⑈ACCOUNT NUMBER⑈CHEQUE NUMBER⑆
 
-Où:
-- TRANSIT: 5 chiffres (numéro de transit/succursale)
-- INSTITUTION: 3 chiffres (numéro d'institution bancaire)
-- ACCOUNT NUMBER: numéro de compte (longueur variable)
-- CHEQUE NUMBER: numéro du chèque
-- Les symboles ⑆ et ⑈ sont des caractères de contrôle MICR
+    Où:
+    - TRANSIT: 5 chiffres (numéro de transit/succursale)
+    - INSTITUTION: 3 chiffres (numéro d'institution bancaire)
+    - ACCOUNT NUMBER: numéro de compte (longueur variable)
+    - CHEQUE NUMBER: numéro du chèque
+    - Les symboles ⑆ et ⑈ sont des caractères de contrôle MICR
 
-IMPORTANT: Dans votre réponse JSON, utilisez EXACTEMENT les chiffres que vous voyez, sans espaces ni formatage supplémentaire.
+    IMPORTANT: Dans votre réponse JSON, utilisez EXACTEMENT les chiffres que vous voyez, sans espaces ni formatage supplémentaire.
 
-Fournissez votre réponse UNIQUEMENT en format JSON avec cette structure exacte:
-{
-    "raw_line": "ligne MICR complète telle que lue",
-    "raw_confidence": 0.95,
-    "transit_number": "12345",
-    "institution_number": "010",
-    "account_number": "1234567890",
-    "cheque_number": "001",
-    "amount": "",
-    "auxiliary_on_us": "",
-    "success": true,
-    "error_message": null
-}
+    Évaluez la confiance de 0.0 à 1.0 basée sur la clarté et la lisibilité de l'image:
+    - 0.95-1.0: Image parfaite, texte très net
+    - 0.85-0.94: Bonne qualité, texte lisible
+    - 0.70-0.84: Qualité moyenne, quelques incertitudes
+    - 0.50-0.69: Qualité médiocre, difficultés de lecture
+    - 0.20-0.49: Mauvaise qualité, très incertain
+    - 0.0-0.19: Illisible ou pas de chèque
 
-Évaluez la confiance de 0.0 à 1.0 basée sur la clarté et la lisibilité de chaque élément.
-Si un élément n'est pas visible ou présent, utilisez une valeur vide.
-Si l'analyse échoue complètement, retournez success: false avec un message d'erreur.
-"""
-    
+    Exemples de réponses selon la qualité:
+
+    Image parfaite, tout très net:
+    {
+        "raw_line": "⑆12345⑆003⑈987654321⑈00123⑆",
+        "raw_confidence": 0.97,
+        "transit_number": "12345",
+        "institution_number": "003",
+        "account_number": "987654321",
+        "cheque_number": "00123",
+        "amount": "",
+        "auxiliary_on_us": "",
+        "success": true,
+        "error_message": null
+    }
+
+    Image de qualité moyenne, quelques flous:
+    {
+        "raw_line": "⑆?2345⑆010⑈?56789012⑈001⑆",
+        "raw_confidence": 0.73,
+        "transit_number": "22345",
+        "institution_number": "010",
+        "account_number": "456789012",
+        "cheque_number": "001",
+        "amount": "",
+        "auxiliary_on_us": "",
+        "success": true,
+        "error_message": null
+    }
+
+    Image de mauvaise qualité, difficile à lire:
+    {
+        "raw_line": "⑆??3??⑆???⑈???????⑈???⑆",
+        "raw_confidence": 0.34,
+        "transit_number": "13422",
+        "institution_number": "002",
+        "account_number": "1234567",
+        "cheque_number": "456",
+        "amount": "",
+        "auxiliary_on_us": "",
+        "success": true,
+        "error_message": null
+    }
+
+    Image très floue, très incertain:
+    {
+        "raw_line": "⑆?????⑆???⑈????????⑈???⑆",
+        "raw_confidence": 0.18,
+        "transit_number": "12000",
+        "institution_number": "001",
+        "account_number": "1000000",
+        "cheque_number": "001",
+        "amount": "",
+        "auxiliary_on_us": "",
+        "success": true,
+        "error_message": null
+    }
+
+    Fournissez votre réponse UNIQUEMENT en format JSON avec cette structure exacte.
+    Si un élément n'est pas visible ou présent, utilisez une valeur vide.
+    Si l'analyse échoue complètement, retournez success: false avec un message d'erreur.
+    """
+
     def _parse_response(self, response, image_path: str, start_time: float) -> MICRResult:
         """Parse la réponse de l'API OpenAI"""
         try:
@@ -150,9 +203,30 @@ Si l'analyse échoue complètement, retournez success: false avec un message d'e
             response_text = response.choices[0].message.content.strip()
             logprobs_data = response.choices[0].logprobs
             
+            # DEBUG: Afficher la réponse brute de GPT-4o
+            print(f"\n📋 RÉPONSE BRUTE GPT-4o:")
+            print(f"🔤 Texte brut: {response_text[:200]}...")  # Premiers 200 caractères
+            
             # Nettoyer la réponse JSON
             response_text = self._clean_json_response(response_text)
             result_data = json.loads(response_text)
+            
+            # DEBUG: Afficher le JSON parsé
+            print(f"\n📊 JSON PARSÉ:")
+            print(f"🎯 raw_confidence GPT: {result_data.get('raw_confidence', 'ABSENT')}")
+            
+            # NOUVELLE FONCTIONNALITÉ: Recalculer raw_confidence avec logprobs
+            recalculated_confidence = self._recalculate_confidence_from_logprobs(
+                result_data.get('raw_confidence'), logprobs_data
+            )
+            
+            if recalculated_confidence != result_data.get('raw_confidence'):
+                print(f"🔄 Confiance recalculée: {recalculated_confidence:.3f} (était: {result_data.get('raw_confidence'):.3f})")
+                result_data['raw_confidence'] = recalculated_confidence
+            print(f"✅ success: {result_data.get('success', 'ABSENT')}")
+            print(f"🏦 transit_number: {result_data.get('transit_number', 'ABSENT')}")
+            print(f"🏢 institution_number: {result_data.get('institution_number', 'ABSENT')}")
+            print(f"📄 JSON complet: {json.dumps(result_data, indent=2)}")
             
             # Créer les composants avec confiance améliorée - NOUVEAU FORMAT
             if not result_data.get("success", False):
@@ -168,22 +242,22 @@ Si l'analyse échoue complètement, retournez success: false avec un message d'e
             # Créer les composants basiques d'abord
             basic_components = {
                 "transit_number": self._create_basic_component_new_format(
-                    result_data.get("transit_number", ""), ComponentType.TRANSIT, logprobs_data
+                    result_data.get("transit_number", ""), ComponentType.TRANSIT, logprobs_data, result_data
                 ),
                 "institution_number": self._create_basic_component_new_format(
-                    result_data.get("institution_number", ""), ComponentType.INSTITUTION, logprobs_data
+                    result_data.get("institution_number", ""), ComponentType.INSTITUTION, logprobs_data, result_data
                 ),
                 "account_number": self._create_basic_component_new_format(
-                    result_data.get("account_number", ""), ComponentType.ACCOUNT, logprobs_data
+                    result_data.get("account_number", ""), ComponentType.ACCOUNT, logprobs_data, result_data
                 ),
                 "cheque_number": self._create_basic_component_new_format(
-                    result_data.get("cheque_number", ""), ComponentType.CHEQUE, logprobs_data
+                    result_data.get("cheque_number", ""), ComponentType.CHEQUE, logprobs_data, result_data
                 ),
                 "amount": self._create_basic_component_new_format(
-                    result_data.get("amount", ""), ComponentType.AMOUNT, logprobs_data
+                    result_data.get("amount", ""), ComponentType.AMOUNT, logprobs_data, result_data
                 ),
                 "auxiliary_on_us": self._create_basic_component_new_format(
-                    result_data.get("auxiliary_on_us", ""), ComponentType.AUXILIARY, logprobs_data
+                    result_data.get("auxiliary_on_us", ""), ComponentType.AUXILIARY, logprobs_data, result_data
                 )
             }
             
@@ -257,15 +331,50 @@ Si l'analyse échoue complètement, retournez success: false avec un message d'e
         
         return response_text.strip()
     
-    def _create_basic_component_new_format(self, value: str, comp_type: ComponentType, logprobs_data) -> Optional[MICRComponent]:
+    def _recalculate_confidence_from_logprobs(self, original_confidence: float, logprobs_data) -> float:
+        """
+        Recalcule raw_confidence en utilisant les logprobs du token de confiance
+        Utilise les mêmes techniques que calculate_logprob_confidence
+        """
+        if not logprobs_data or not original_confidence:
+            return original_confidence or 0.5
+        
+        try:
+            # Utiliser le calculateur existant pour chercher la valeur de confiance
+            confidence_str = f"{original_confidence:.2f}"  # "0.95", "0.73", etc.
+            
+            print(f"🔍 Recherche confiance '{confidence_str}' avec techniques avancées...")
+            
+            # Réutiliser la logique éprouvée de calculate_logprob_confidence
+            logprob_confidence = self.confidence_calculator.calculate_logprob_confidence(
+                logprobs_data, confidence_str
+            )
+            
+            if logprob_confidence > 0.0:
+                print(f"✅ Confiance logprobs trouvée: {logprob_confidence:.3f}")
+                
+                # Moyenne pondérée entre confiance GPT et confiance logprob
+                final_confidence = (original_confidence * 0.7) + (logprob_confidence * 0.3)
+                print(f"📊 Combinaison: GPT({original_confidence:.3f}) * 0.7 + logprobs({logprob_confidence:.3f}) * 0.3 = {final_confidence:.3f}")
+                return min(final_confidence, 1.0)
+            else:
+                print("⚠️ Confiance non détectée dans logprobs - utilisation GPT originale")
+                return original_confidence
+            
+        except Exception as e:
+            print(f"❌ Erreur recalcul confiance: {e}")
+            return original_confidence or 0.5
+    
+    def _create_basic_component_new_format(self, value: str, comp_type: ComponentType, logprobs_data, result_data: dict) -> Optional[MICRComponent]:
         """Crée un composant MICR avec le nouveau format de réponse"""
         if not value or not value.strip():
             return None
         
         value = value.strip()
         
-        # Confiance LLM par défaut basée sur la présence de la valeur
-        llm_confidence = 0.9  # Confiance par défaut si la valeur est présente
+        # Utiliser raw_confidence du LLM au lieu d'une valeur fixe
+        llm_confidence = result_data.get("raw_confidence", 0.5)  # Utilise la confiance globale du LLM
+        print(f"🤖 Confiance LLM pour {comp_type.value}: {llm_confidence:.3f} (depuis raw_confidence)")
         
         # Calculer la confiance logprobs
         logprob_confidence = 0.0
