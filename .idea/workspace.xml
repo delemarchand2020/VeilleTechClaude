@@ -4,9 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="21e7212a-badb-4680-96ea-d52e522dac99" name="Changes" comment="micr demo debug">
+    <list default="true" id="21e7212a-badb-4680-96ea-d52e522dac99" name="Changes" comment="micr nettoyage">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/micr_reader/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/micr_reader/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/micr_reader/core/micr_analyzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/micr_reader/core/micr_analyzer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/micr_reader/core/validator.py" beforeDir="false" afterPath="$PROJECT_DIR$/micr_reader/core/validator.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -153,7 +155,23 @@
       <option name="project" value="LOCAL" />
       <updated>1748619316679</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="micr nettoyage">
+      <option name="closed" value="true" />
+      <created>1748629398768</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1748629398768</updated>
+    </task>
+    <task id="LOCAL-00013" summary="micr nettoyage">
+      <option name="closed" value="true" />
+      <created>1748629408897</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1748629408897</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -163,6 +181,7 @@
     <MESSAGE value="implementation second connecteur" />
     <MESSAGE value="micr demo" />
     <MESSAGE value="micr demo debug" />
-    <option name="LAST_COMMIT_MESSAGE" value="micr demo debug" />
+    <MESSAGE value="micr nettoyage" />
+    <option name="LAST_COMMIT_MESSAGE" value="micr nettoyage" />
   </component>
 </project>

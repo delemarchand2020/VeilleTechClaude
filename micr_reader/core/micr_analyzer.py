@@ -14,6 +14,7 @@ from core.confidence_calculator import ConfidenceCalculator
 from core.validator import MICRValidator
 from utils.image_utils import ImageProcessor
 from config import config
+from config.prompts import get_micr_prompt
 
 class MICRAnalyzer:
     """
@@ -88,7 +89,7 @@ class MICRAnalyzer:
                     "content": [
                         {
                             "type": "text",
-                            "text": self._create_micr_prompt()
+                            "text": get_micr_prompt(config.micr.region)
                         },
                         {
                             "type": "image_url",
@@ -106,95 +107,7 @@ class MICRAnalyzer:
             top_logprobs=config.openai.top_logprobs
         )
 
-    def _create_micr_prompt(self) -> str:
-            """
-            Crée le prompt spécialisé pour l'analyse MICR des chèques canadiens
-            """
-            return """
-    Analysez cette image de chèque canadien et extrayez les informations du code MICR (Magnetic Ink Character Recognition) situé au bas du chèque.
 
-    Le code MICR canadien suit généralement ce format:
-    ⑆TRANSIT⑆INSTITUTION⑈ACCOUNT NUMBER⑈CHEQUE NUMBER⑆
-
-    Où:
-    - TRANSIT: 5 chiffres (numéro de transit/succursale)
-    - INSTITUTION: 3 chiffres (numéro d'institution bancaire)
-    - ACCOUNT NUMBER: numéro de compte (longueur variable)
-    - CHEQUE NUMBER: numéro du chèque
-    - Les symboles ⑆ et ⑈ sont des caractères de contrôle MICR
-
-    IMPORTANT: Dans votre réponse JSON, utilisez EXACTEMENT les chiffres que vous voyez, sans espaces ni formatage supplémentaire.
-
-    Évaluez la confiance de 0.0 à 1.0 basée sur la clarté et la lisibilité de l'image:
-    - 0.95-1.0: Image parfaite, texte très net
-    - 0.85-0.94: Bonne qualité, texte lisible
-    - 0.70-0.84: Qualité moyenne, quelques incertitudes
-    - 0.50-0.69: Qualité médiocre, difficultés de lecture
-    - 0.20-0.49: Mauvaise qualité, très incertain
-    - 0.0-0.19: Illisible ou pas de chèque
-
-    Exemples de réponses selon la qualité:
-
-    Image parfaite, tout très net:
-    {
-        "raw_line": "⑆12345⑆003⑈987654321⑈00123⑆",
-        "raw_confidence": 0.97,
-        "transit_number": "12345",
-        "institution_number": "003",
-        "account_number": "987654321",
-        "cheque_number": "00123",
-        "amount": "",
-        "auxiliary_on_us": "",
-        "success": true,
-        "error_message": null
-    }
-
-    Image de qualité moyenne, quelques flous:
-    {
-        "raw_line": "⑆?2345⑆010⑈?56789012⑈001⑆",
-        "raw_confidence": 0.73,
-        "transit_number": "22345",
-        "institution_number": "010",
-        "account_number": "456789012",
-        "cheque_number": "001",
-        "amount": "",
-        "auxiliary_on_us": "",
-        "success": true,
-        "error_message": null
-    }
-
-    Image de mauvaise qualité, difficile à lire:
-    {
-        "raw_line": "⑆??3??⑆???⑈???????⑈???⑆",
-        "raw_confidence": 0.34,
-        "transit_number": "13422",
-        "institution_number": "002",
-        "account_number": "1234567",
-        "cheque_number": "456",
-        "amount": "",
-        "auxiliary_on_us": "",
-        "success": true,
-        "error_message": null
-    }
-
-    Image très floue, très incertain:
-    {
-        "raw_line": "⑆?????⑆???⑈????????⑈???⑆",
-        "raw_confidence": 0.18,
-        "transit_number": "12000",
-        "institution_number": "001",
-        "account_number": "1000000",
-        "cheque_number": "001",
-        "amount": "",
-        "auxiliary_on_us": "",
-        "success": true,
-        "error_message": null
-    }
-
-    Fournissez votre réponse UNIQUEMENT en format JSON avec cette structure exacte.
-    Si un élément n'est pas visible ou présent, utilisez une valeur vide.
-    Si l'analyse échoue complètement, retournez success: false avec un message d'erreur.
-    """
 
     def _parse_response(self, response, image_path: str, start_time: float) -> MICRResult:
         """Parse la réponse de l'API OpenAI"""

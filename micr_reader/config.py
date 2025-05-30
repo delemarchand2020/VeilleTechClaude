@@ -27,11 +27,14 @@ class ConfidenceConfig:
 
 @dataclass
 class MICRConfig:
-    """Configuration pour la validation MICR canadien"""
-    transit_length: int = 5
-    institution_length: int = 3
-    min_account_length: int = 3
-    max_account_length: int = 20
+    """Configuration pour la validation MICR canadien - SPÉCIFICATION CORRECTE"""
+    region: str = "canada"               # Région pour sélection du prompt
+    transit_length: int = 5              # Transit: exactement 5 chiffres
+    institution_length: int = 3          # Institution: exactement 3 chiffres
+    min_account_length: int = 7          # Compte: minimum 7 chiffres
+    max_account_length: int = 12         # Compte: maximum 12 chiffres
+    min_cheque_length: int = 1           # Chèque: minimum 1 chiffre
+    max_cheque_length: int = 10          # Chèque: maximum 10 chiffres
 
 @dataclass
 class ImageConfig:
@@ -63,7 +66,9 @@ class Config:
             min_confidence_threshold=float(os.getenv('MIN_CONFIDENCE_THRESHOLD', '0.5'))
         )
         
-        self.micr = MICRConfig()
+        self.micr = MICRConfig(
+            region=os.getenv('MICR_REGION', 'canada')
+        )
         self.image = ImageConfig()
     
     def validate(self) -> bool:
@@ -98,10 +103,13 @@ class Config:
                 'min_confidence_threshold': self.confidence.min_confidence_threshold
             },
             'micr': {
+                'region': self.micr.region,
                 'transit_length': self.micr.transit_length,
                 'institution_length': self.micr.institution_length,
                 'min_account_length': self.micr.min_account_length,
-                'max_account_length': self.micr.max_account_length
+                'max_account_length': self.micr.max_account_length,
+                'min_cheque_length': self.micr.min_cheque_length,
+                'max_cheque_length': self.micr.max_cheque_length
             },
             'image': {
                 'max_file_size_mb': self.image.max_file_size_mb,

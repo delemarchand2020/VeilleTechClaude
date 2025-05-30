@@ -50,6 +50,8 @@ class MICRValidator:
         self.institution_length = config.micr.institution_length
         self.min_account_length = config.micr.min_account_length
         self.max_account_length = config.micr.max_account_length
+        self.min_cheque_length = config.micr.min_cheque_length
+        self.max_cheque_length = config.micr.max_cheque_length
     
     def validate_canadian_micr(self, result: MICRResult) -> ValidationResult:
         """
@@ -85,15 +87,17 @@ class MICRValidator:
         # Validation du numéro de compte
         account_valid = self._validate_account(result.account_number, errors, warnings)
         
+        # Validation du numéro de chèque
+        cheque_valid = self._validate_cheque_number_strict(result.cheque_number, errors, warnings)
+        
         # Validation du format général
         format_valid = self._validate_overall_format(result, errors, warnings)
         
         # Validations supplémentaires
-        self._validate_cheque_number(result.cheque_number, warnings)
         self._validate_consistency(result, warnings)
         
         # Validation globale
-        is_valid = transit_valid and institution_valid and account_valid and format_valid
+        is_valid = transit_valid and institution_valid and account_valid and cheque_valid and format_valid
         
         return ValidationResult(
             is_valid=is_valid,
@@ -134,6 +138,39 @@ class MICRValidator:
         # Avertissement pour confiance faible
         if transit_component.combined_confidence < 0.7:
             warnings.append(f"Confiance faible pour le transit: {transit_component.combined_confidence:.1%}")
+        
+        return True
+    
+    def _validate_cheque_number_strict(self, cheque_component, errors: List[str], warnings: List[str]) -> bool:
+        """Valide le numéro de chèque selon la spécification (1-10 chiffres)"""
+        if not cheque_component or not cheque_component.value:
+            errors.append("Numéro de chèque manquant")
+            return False
+        
+        cheque_num = cheque_component.value.strip()
+        
+        # Vérifier que ce sont tous des chiffres
+        if not cheque_num.isdigit():
+            errors.append(f"Numéro de chèque doit contenir seulement des chiffres: {cheque_num}")
+            return False
+        
+        # Vérifier la longueur selon spécification
+        if len(cheque_num) < self.min_cheque_length:
+            errors.append(f"Numéro de chèque trop court: {len(cheque_num)} caractères (minimum {self.min_cheque_length})")
+            return False
+        
+        if len(cheque_num) > self.max_cheque_length:
+            errors.append(f"Numéro de chèque trop long: {len(cheque_num)} caractères (maximum {self.max_cheque_length})")
+            return False
+        
+        # Vérifications de plausibilité
+        if cheque_num == '0' * len(cheque_num):
+            errors.append("Numéro de chèque invalide: que des zéros")
+            return False
+        
+        # Avertissement pour confiance faible
+        if cheque_component.combined_confidence < 0.7:
+            warnings.append(f"Confiance faible pour le chèque: {cheque_component.combined_confidence:.1%}")
         
         return True
     
@@ -229,21 +266,10 @@ class MICRValidator:
         return True
     
     def _validate_cheque_number(self, cheque_component, warnings: List[str]):
-        """Valide le numéro de chèque (optionnel)"""
-        if not cheque_component or not cheque_component.value:
-            warnings.append("Numéro de chèque non détecté")
-            return
-        
-        cheque_num = cheque_component.value.strip()
-        
-        if not cheque_num.isdigit():
-            warnings.append(f"Numéro de chèque contient des caractères non-numériques: {cheque_num}")
-        
-        if len(cheque_num) > 10:
-            warnings.append("Numéro de chèque très long, vérifiez la détection")
-        
-        if cheque_num == '0' * len(cheque_num):
-            warnings.append("Numéro de chèque suspect: que des zéros")
+        """Valide le numéro de chèque (version légère pour warnings seulement)"""
+        # Cette fonction est maintenant redondante avec _validate_cheque_number_strict
+        # Gardée pour compatibilité mais ne fait que des warnings
+        pass
     
     def _validate_consistency(self, result: MICRResult, warnings: List[str]):
         """Valide la cohérence entre les composants"""
