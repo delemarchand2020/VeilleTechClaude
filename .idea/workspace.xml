@@ -4,12 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="21e7212a-badb-4680-96ea-d52e522dac99" name="Changes" comment="micr nettoyage">
+    <list default="true" id="21e7212a-badb-4680-96ea-d52e522dac99" name="Changes" comment="ajustements">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/micr_reader/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/micr_reader/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/micr_reader/core/validator.py" beforeDir="false" afterPath="$PROJECT_DIR$/micr_reader/core/validator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/micr_reader/interface/gradio_interface.py" beforeDir="false" afterPath="$PROJECT_DIR$/micr_reader/interface/gradio_interface.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/micr_reader/prompts/prompts.py" beforeDir="false" afterPath="$PROJECT_DIR$/micr_reader/prompts/prompts.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -196,7 +192,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748632256465</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="ajustements">
+      <option name="closed" value="true" />
+      <created>1748633952991</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1748633952991</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -207,6 +211,7 @@
     <MESSAGE value="micr demo" />
     <MESSAGE value="micr demo debug" />
     <MESSAGE value="micr nettoyage" />
-    <option name="LAST_COMMIT_MESSAGE" value="micr nettoyage" />
+    <MESSAGE value="ajustements" />
+    <option name="LAST_COMMIT_MESSAGE" value="ajustements" />
   </component>
 </project>
