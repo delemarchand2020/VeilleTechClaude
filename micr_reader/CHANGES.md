@@ -2,10 +2,11 @@
 
 ## ✅ Modifications appliquées avec succès
 
-### 📁 Nouveau système de configuration des prompts
-- **Créé**: `config/prompts.py` - Gestion centralisée des prompts MICR
+### 📁 Nouveau système de gestion des prompts
+- **Créé**: `prompts/prompts.py` - Gestion centralisée des prompts MICR
 - **Mis à jour**: `config.py` - Ajout du paramètre `region` 
-- **Modifié**: `core/micr_analyzer.py` - Utilise maintenant le prompt depuis la config
+- **Modifié**: `core/micr_analyzer.py` - Utilise maintenant le prompt depuis prompts/
+- **Conflit résolu**: Renommé `config/` → `prompts/` pour éviter le conflit avec `config.py`
 
 ### 🎯 Prompt MICR corrigé
 - **Format correct**: `CHEQUE ⑆ TRANSIT ⑆ INSTITUTION ⑈ ACCOUNT ⑈`
@@ -47,7 +48,7 @@ python cleanup_project.py
 
 ```
 micr_reader/
-├── config/
+├── prompts/
 │   ├── __init__.py
 │   └── prompts.py          # 🆕 Prompts centralisés
 ├── core/                   # Code métier

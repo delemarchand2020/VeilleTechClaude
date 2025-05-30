@@ -14,7 +14,7 @@ from core.confidence_calculator import ConfidenceCalculator
 from core.validator import MICRValidator
 from utils.image_utils import ImageProcessor
 from config import config
-from config.prompts import get_micr_prompt
+from prompts import get_micr_prompt
 
 class MICRAnalyzer:
     """
