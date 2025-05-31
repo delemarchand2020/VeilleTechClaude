@@ -53,11 +53,13 @@ Agent Collecteur Tech → Agent Analyse Tech → Agent Synthétiseur
 ## 🚧 État actuel selon la roadmap
 
 - [x] **Phase 1** : Architecture de base et modèles de données ✅ **TERMINÉE**
-- [x] **Phase 2** : Agent Collecteur Tech (sources multiples) 🔄 **50% TERMINÉ**
+- [x] **Phase 2** : Agent Collecteur Tech (sources multiples) 🔄 **CONNECTEURS TERMINÉS - AGENT À DÉVELOPPER**
   - [x] Connecteur Medium ✅
-  - [x] Connecteur ArXiv ✅ **NOUVEAU**
-  - [ ] Connecteur GitHub
-  - [ ] Connecteur Towards Data Science
+  - [x] Connecteur ArXiv ✅
+  - [x] **Classe de base et architecture** ✅
+  - [ ] **🎯 AGENT COLLECTEUR TECH** (orchestrateur des connecteurs)
+  - [ ] Connecteur GitHub (reporté)
+  - [ ] Connecteur Towards Data Science (reporté)
 - [ ] **Phase 3** : Agent Analyse Tech (filtrage expert) ⏳ **À FAIRE**
 - [ ] **Phase 4** : Agent Synthétiseur (rapports Markdown) ⏳ **À FAIRE**
 
@@ -65,27 +67,63 @@ Agent Collecteur Tech → Agent Analyse Tech → Agent Synthétiseur
 
 ## 🎯 Prochaines étapes prioritaires
 
-### Immediate (Phase 2 - continuation)
-1. **Développer les connecteurs manquants** :
-   - Connecteur GitHub (repos, releases, trending)
-   - Connecteur Towards Data Science (si différent de Medium)
+### 🔥 PRIORITÉ IMMÉDIATE - Développement de l'Agent Collecteur Tech
 
-2. **Finaliser l'Agent Collecteur Tech** :
-   - Intégration de tous les connecteurs
-   - Tests d'intégration globaux
-   - Gestion des erreurs et de la robustesse
+**OBJECTIF** : Créer l'agent qui orchestre les connecteurs existants
 
-### À moyen terme (Phase 3)
-3. **Agent Analyse Tech** :
+#### 🎯 Ce qui doit être développé :
+
+1. **Agent Collecteur Tech (TechCollectorAgent)** :
+   - **Orchestration** des connecteurs Medium et ArXiv
+   - **Collecte parallèle** depuis toutes les sources
+   - **Agrégation** des résultats de type `List[RawContent]`
+   - **Déduplication globale** entre toutes les sources
+   - **Gestion d'erreurs** centralisée et robuste
+   - **Configuration** des quotas et priorités par source
+   - **Interface LangGraph** pour intégration dans le workflow
+
+2. **Architecture cible de l'agent** :
+   ```python
+   class TechCollectorAgent:
+       def __init__(self):
+           self.connectors = [MediumConnector(), ArxivConnector()]
+       
+       async def collect_all_sources(self, limit: int = 30) -> List[RawContent]:
+           # Orchestration de tous les connecteurs
+           # Agrégation des résultats
+           # Déduplication globale
+           # Tri par pertinence/date
+           pass
+   ```
+
+3. **Tests de l'agent** :
+   - Tests unitaires de l'orchestration
+   - Tests d'intégration avec les connecteurs
+   - Tests de gestion d'erreurs
+
+#### 📋 Éléments déjà prêts :
+- ✅ Connecteurs Medium et ArXiv fonctionnels
+- ✅ Classe de base `BaseConnector` avec interface commune
+- ✅ Modèle `RawContent` standardisé
+- ✅ Infrastructure de tests complète
+
+### 🕰️ À moyen terme (Phase 3)
+4. **Agent Analyse Tech** :
+   - Consomme les `RawContent` de l'Agent Collecteur
    - Système de filtrage selon profil expert
    - Algorithme de classement et priorisation
-   - Tests de performance du système d'analyse
+   - Scoring de pertinence avec LLM
 
-### À long terme (Phase 4)
-4. **Agent Synthétiseur** :
+### 🕰️ À long terme (Phase 4)
+5. **Agent Synthétiseur** :
+   - Consomme les contenus analysés
    - Génération de rapports Markdown
    - Système de digest quotidien
    - Interface de commande finale
+
+### 📋 Connecteurs reportés (optionnels)
+- Connecteur GitHub (repos, releases, trending)
+- Connecteur Towards Data Science (si différent de Medium)
 
 ---
 
@@ -159,11 +197,42 @@ python test_arxiv_manual.py
 
 ## 🔄 Pour reprendre le travail
 
+### 🔥 **PROCHAINE SESSION : Développement de l'Agent Collecteur Tech**
+
 1. **Vérifier l'environnement** : S'assurer que toutes les dépendances sont installées
 2. **Lancer les tests** : `python run_tests.py --connector` pour vérifier les deux connecteurs
-3. **Continuer Phase 2** : Développer le connecteur GitHub en priorité
-4. **Tests manuels** : Utiliser `test_arxiv_manual.py` pour vérifier ArXiv
-5. **Maintenir la qualité** : Écrire les tests pour chaque nouveau connecteur
+3. **Développer l'Agent Collecteur Tech** :
+   - Créer `src/agents/tech_collector_agent.py`
+   - Implémenter l'orchestration des connecteurs Medium + ArXiv
+   - Intégrer avec LangGraph
+   - Tests complets de l'agent
+
+### 📝 **Contexte pour la prochaine session**
+
+**CE QUI EST FAIT** :
+- ✅ Connecteurs Medium et ArXiv complètement fonctionnels
+- ✅ Tests passent tous (corrections appliquées)
+- ✅ Architecture de base solide avec `BaseConnector` et `RawContent`
+- ✅ Infrastructure de tests robuste
+
+**CE QUI MANQUE** :
+- ❌ **Agent Collecteur Tech** : L'orchestrateur central qui utilise les connecteurs
+- ❌ Interface LangGraph pour l'intégration dans le workflow
+- ❌ Logique d'agrégation et déduplication globale
+
+### 📄 **Fichiers à créer dans la prochaine session**
+```
+src/agents/
+├── __init__.py
+├── tech_collector_agent.py  # À créer
+└── base_agent.py           # À créer (optionnel)
+
+tests/
+└── test_tech_collector_agent.py  # À créer
+```
+
+### 🎯 **Objectif de la prochaine session**
+Créer l'Agent Collecteur Tech qui transforme les connecteurs individuels en un système d'orchestration puissant pour la veille technologique.
 
 ---
 
@@ -171,6 +240,17 @@ python test_arxiv_manual.py
 
 - ✅ **Connecteur ArXiv complet** développé et testé
 - ✅ **Tests ArXiv** avec couverture des fonctionnalités principales
+- ✅ **Corrections tests Medium** : erreurs d'extraction d'ID et récursion résolues
+- ✅ **Tous les tests passent** : Infrastructure de test complètement fonctionnelle
 - ✅ **Documentation technique** complète du connecteur ArXiv
 - ✅ **Integration** dans l'architecture existante
-- 📈 **Progression** : Phase 2 maintenant à 50% (2/4 connecteurs terminés)
+- ✅ **Stratégie ajustée** : Focus sur les agents plutôt que les connecteurs additionnels
+- 📈 **Clarification** : Les connecteurs sont terminés, l'Agent Collecteur Tech est la prochaine étape
+
+---
+
+## 📢 RÉSUMÉ STRATÉGIQUE
+
+**DÉCISION CLÉ** : Reporter GitHub et Towards Data Science pour se concentrer sur le développement des **agents intelligents** qui utilisent les connecteurs existants.
+
+**PROCHAINE PRIORITÉ** : Développer l'Agent Collecteur Tech qui orchestrera Medium + ArXiv pour créer un système de veille intelligent et automatisé.
