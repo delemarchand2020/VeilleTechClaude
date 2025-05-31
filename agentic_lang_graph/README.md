@@ -66,16 +66,18 @@ python main.py
 └── requirements.txt    # Dépendances
 ```
 
-## 🔄 Roadmap
+## 🔄 Statut du Projet
 
-- [x] **Phase 1** : Architecture de base et modèles de données
-- [x] **Phase 2** : Agent Collecteur Tech (sources multiples) - **50% TERMINÉ**
+- [x] **Phase 1** : Architecture de base et modèles de données ✅ **TERMINÉE**
+- [x] **Phase 2** : Agent Collecteur Tech ✅ **TERMINÉE**
   - [x] Connecteur Medium ✅
-  - [x] Connecteur ArXiv ✅
-  - [ ] Connecteur GitHub
-  - [ ] Connecteur Towards Data Science
-- [ ] **Phase 3** : Agent Analyse Tech (filtrage expert)
-- [ ] **Phase 4** : Agent Synthétiseur (rapports Markdown)
+  - [x] Connecteur ArXiv ✅ 
+  - [x] Agent Collecteur Tech ✅ **NOUVEAU**
+  - [x] Tests complets ✅
+  - [ ] Connecteur GitHub (reporté)
+  - [ ] Connecteur Towards Data Science (reporté)
+- [ ] **Phase 3** : Agent Analyse Tech ⏳ **PROCHAINE PRIORITÉ**
+- [ ] **Phase 4** : Agent Synthétiseur ⏳ **À FAIRE**
 
 ## 📊 Sources de données
 
@@ -95,40 +97,33 @@ python main.py
 - **GitHub** : Repositories, releases, trending
 - **Towards Data Science** : Articles spécialisés ML/AI
 
-## 🧪 Tests
+## 🧪 Tests et Validation
 
-### Exécution des tests
-
+### 🎯 Validation Rapide
 ```bash
-# Tous les tests
-python run_tests.py
-# ou
-dev.bat test
-
-# Tests des connecteurs seulement
-python run_tests.py --connector
-
-# Tests unitaires seulement
-python run_tests.py --unit
-# ou
-dev.bat test-unit
-
-# Tests avec couverture de code
-python run_tests.py --coverage --html
-# ou
-dev.bat test-coverage
-
-# Tests rapides (sans les lents)
-python run_tests.py --fast
+# Test complet de l'Agent Collecteur Tech
+python validation_finale.py
 ```
 
-### Tests manuels des connecteurs
-
+### Tests Automatisés
 ```bash
-# Test du connecteur Medium
-python test_medium_manual.py
+# Tests des agents
+python run_tests.py --agent
 
-# Test du connecteur ArXiv
+# Tests des connecteurs
+python run_tests.py --connector
+
+# Tests avec couverture
+python run_tests.py --coverage --html
+```
+
+### Tests Manuels
+```bash
+# Test manuel simple
+python manual_tests/test_simple.py
+
+# Tests spécifiques par connecteur
+python test_medium_manual.py
 python test_arxiv_manual.py
 ```
 

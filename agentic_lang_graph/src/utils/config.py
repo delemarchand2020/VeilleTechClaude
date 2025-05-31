@@ -57,3 +57,21 @@ def validate_config():
     os.makedirs(Config.OUTPUT_DIR, exist_ok=True)
     
     return True
+
+
+def load_config():
+    """Charge et retourne la configuration sous forme de dictionnaire."""
+    validate_config()
+    
+    return {
+        'openai_api_key': Config.OPENAI_API_KEY,
+        'database_path': Config.DATABASE_PATH,
+        'output_dir': Config.OUTPUT_DIR,
+        'data_dir': Config.DATA_DIR,
+        'max_articles_per_source': Config.MAX_ARTICLES_PER_SOURCE,
+        'analysis_model': Config.ANALYSIS_MODEL,
+        'synthesis_model': Config.SYNTHESIS_MODEL,
+        'sources': Config.SOURCES,
+        'keywords': Config.KEYWORDS,
+        'expert_filters': Config.EXPERT_FILTERS
+    }

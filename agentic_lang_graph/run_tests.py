@@ -33,6 +33,7 @@ def main():
     parser.add_argument("--unit", action="store_true", help="Tests unitaires seulement")
     parser.add_argument("--integration", action="store_true", help="Tests d'intégration seulement")
     parser.add_argument("--connector", action="store_true", help="Tests des connecteurs seulement")
+    parser.add_argument("--agent", action="store_true", help="Tests des agents seulement")
     
     # Options de performance
     parser.add_argument("--fast", action="store_true", help="Tests rapides seulement (exclut les tests lents)")
@@ -64,6 +65,8 @@ def main():
         markers.append("integration")
     if args.connector:
         markers.append("connector")
+    if args.agent:
+        markers.append("agent")
     
     if markers:
         pytest_args.extend(["-m", " or ".join(markers)])
@@ -105,16 +108,16 @@ def main():
         pytest_args.extend(["-k", args.test])
     
     # Si aucun argument spécifique, utiliser la configuration par défaut
-    if not any([args.unit, args.integration, args.connector, args.file, args.test]):
+    if not any([args.unit, args.integration, args.connector, args.agent, args.file, args.test]):
         pytest_args.append("tests/")
     
     # Exécution des tests
     return_code = run_pytest(pytest_args)
     
     if return_code == 0:
-        print("\n✅ Tous les tests sont passés avec succès!")
+        print("\n[OK] Tous les tests sont passes avec succes!")
     else:
-        print(f"\n❌ Certains tests ont échoué (code de retour: {return_code})")
+        print(f"\n[ERREUR] Certains tests ont echoue (code de retour: {return_code})")
     
     return return_code
 

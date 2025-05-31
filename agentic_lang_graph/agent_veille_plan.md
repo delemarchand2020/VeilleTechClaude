@@ -53,11 +53,11 @@ Agent Collecteur Tech → Agent Analyse Tech → Agent Synthétiseur
 ## 🚧 État actuel selon la roadmap
 
 - [x] **Phase 1** : Architecture de base et modèles de données ✅ **TERMINÉE**
-- [x] **Phase 2** : Agent Collecteur Tech (sources multiples) 🔄 **CONNECTEURS TERMINÉS - AGENT À DÉVELOPPER**
+- [x] **Phase 2** : Agent Collecteur Tech (sources multiples) ✅ **TERMINÉE**
   - [x] Connecteur Medium ✅
   - [x] Connecteur ArXiv ✅
   - [x] **Classe de base et architecture** ✅
-  - [ ] **🎯 AGENT COLLECTEUR TECH** (orchestrateur des connecteurs)
+  - [x] **🎆 AGENT COLLECTEUR TECH** ✅ **NOUVEAU - TERMINÉ**
   - [ ] Connecteur GitHub (reporté)
   - [ ] Connecteur Towards Data Science (reporté)
 - [ ] **Phase 3** : Agent Analyse Tech (filtrage expert) ⏳ **À FAIRE**
@@ -220,19 +220,23 @@ python test_arxiv_manual.py
 - ❌ Interface LangGraph pour l'intégration dans le workflow
 - ❌ Logique d'agrégation et déduplication globale
 
-### 📄 **Fichiers à créer dans la prochaine session**
+### 📋 **Fichiers créés dans cette session**
 ```
 src/agents/
-├── __init__.py
-├── tech_collector_agent.py  # À créer
-└── base_agent.py           # À créer (optionnel)
+├── __init__.py                    ✅ CRÉÉ
+├── tech_collector_agent.py        ✅ CRÉÉ - AGENT COMPLET
+└── base_agent.py                 (optionnel)
 
 tests/
-└── test_tech_collector_agent.py  # À créer
+└── test_tech_collector_agent.py   ✅ CRÉÉ - TESTS COMPLETS
+
+Scripts de test :
+├── test_tech_collector_manual.py  ✅ NOUVEAU - Test manuel complet
+└── test_agent_quick.py           ✅ NOUVEAU - Test rapide
 ```
 
 ### 🎯 **Objectif de la prochaine session**
-Créer l'Agent Collecteur Tech qui transforme les connecteurs individuels en un système d'orchestration puissant pour la veille technologique.
+Développer l'Agent Analyse Tech qui consommera les contenus de l'Agent Collecteur pour les analyser et les filtrer selon un profil expert avec l'aide d'un LLM.
 
 ---
 
@@ -253,4 +257,4 @@ Créer l'Agent Collecteur Tech qui transforme les connecteurs individuels en un 
 
 **DÉCISION CLÉ** : Reporter GitHub et Towards Data Science pour se concentrer sur le développement des **agents intelligents** qui utilisent les connecteurs existants.
 
-**PROCHAINE PRIORITÉ** : Développer l'Agent Collecteur Tech qui orchestrera Medium + ArXiv pour créer un système de veille intelligent et automatisé.
+**PROCHAINE PRIORITÉ** : Développer l'Agent Analyse Tech qui consommera les contenus de l'Agent Collecteur pour les analyser et filtrer selon un profil expert avec l'aide d'un LLM, créant ainsi un système de veille intelligent et personnalisé.
