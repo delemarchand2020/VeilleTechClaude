@@ -1,10 +1,18 @@
 """Modèles de données pour la base SQLite"""
 import sqlite3
 import json
+import os
 from datetime import datetime
 from typing import List, Dict, Optional
 from dataclasses import dataclass
-from agentic_lang_graph.src.utils.config import Config
+
+# Import relatif corrigé
+try:
+    from ..utils.config import validate_config
+except ImportError:
+    # Fallback si import relatif échoue
+    def validate_config():
+        pass
 
 @dataclass
 class Article:
@@ -48,7 +56,14 @@ class DatabaseManager:
     """Gestionnaire de base de données SQLite"""
     
     def __init__(self, db_path: str = None):
-        self.db_path = db_path or Config.DATABASE_PATH
+        # Utilisation d'un chemin par défaut si non spécifié
+        if db_path is None:
+            # Création du répertoire data s'il n'existe pas
+            data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data")
+            os.makedirs(data_dir, exist_ok=True)
+            db_path = os.path.join(data_dir, "articles.db")
+        
+        self.db_path = db_path
         self.init_database()
     
     def init_database(self):

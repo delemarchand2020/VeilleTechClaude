@@ -10,12 +10,14 @@ from .simple_analyzer_prototype import (
     DifficultyLevel
 )
 from .tech_analyzer_agent import TechAnalyzerAgent
+from .tech_synthesizer_agent import TechSynthesizerAgent
 
 __all__ = [
     'TechCollectorAgent',
     'CollectionConfig',
     'SimpleAnalyzerPrototype',
     'TechAnalyzerAgent',
+    'TechSynthesizerAgent',
     'ExpertProfile', 
     'ExpertLevel',
     'AnalyzedContent',

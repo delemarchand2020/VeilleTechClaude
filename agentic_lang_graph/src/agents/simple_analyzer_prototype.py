@@ -62,6 +62,29 @@ class ContentAnalysis:
     reasons: List[str]              # Raisons du score
     recommended: bool               # Recommandé pour le profil expert
     
+    # Attributs ajoutés pour compatibilité avec le synthétiseur
+    category: str = "unknown"        # "research", "tutorial", "news"
+    expertise_level: str = "intermediate"  # Alias pour difficulty_level
+    
+    def __post_init__(self):
+        """Post-processing après initialisation."""
+        # Synchronisation expertise_level avec difficulty_level
+        if hasattr(self.difficulty_level, 'value'):
+            self.expertise_level = self.difficulty_level.value
+        else:
+            self.expertise_level = str(self.difficulty_level)
+        
+        # Détermination de la catégorie par défaut si non spécifiée
+        if self.category == "unknown":
+            # Heuristique simple basée sur les topics
+            topics_lower = [topic.lower() for topic in self.main_topics]
+            if any(word in topics_lower for word in ['research', 'paper', 'study', 'analysis']):
+                self.category = "research"
+            elif any(word in topics_lower for word in ['tutorial', 'guide', 'how-to', 'implementation']):
+                self.category = "tutorial"
+            else:
+                self.category = "news"
+    
 
 @dataclass 
 class AnalyzedContent:
@@ -206,7 +229,8 @@ class SimpleAnalyzerPrototype:
                 key_insights=result_data.get("key_insights", ""),
                 practical_value=float(result_data.get("practical_value", 0)),
                 reasons=result_data.get("reasons", []),
-                recommended=bool(result_data.get("recommended", False))
+                recommended=bool(result_data.get("recommended", False)),
+                category=result_data.get("category", "unknown")
             )
             
         except (json.JSONDecodeError, KeyError, ValueError) as e:
@@ -219,7 +243,8 @@ class SimpleAnalyzerPrototype:
                 key_insights="Erreur d'analyse automatique",
                 practical_value=5.0,
                 reasons=["Erreur de parsing"],
-                recommended=False
+                recommended=False,
+                category="unknown"
             )
     
     def _get_system_prompt(self) -> str:
@@ -238,6 +263,7 @@ FORMAT DE RÉPONSE (JSON obligatoire):
 {{
     "relevance_score": 8.5,
     "difficulty_level": "intermediate",
+    "category": "research",
     "main_topics": ["LangGraph", "Multi-agent"],
     "key_insights": "Article détaillant...",
     "practical_value": 7.0,
@@ -248,6 +274,7 @@ FORMAT DE RÉPONSE (JSON obligatoire):
 CRITÈRES D'ÉVALUATION:
 - relevance_score (0-10): Pertinence pour le profil expert
 - difficulty_level: "beginner", "intermediate", "expert"
+- category: "research", "tutorial", "news"
 - practical_value (0-10): Valeur pratique vs théorique
 - recommended: true si score ≥ 7 ET correspond au profil"""
 

@@ -163,8 +163,7 @@ class TechAnalyzerAgent:
             # Extraction des résultats
             analyzed_contents = final_state.get("analysis_results", [])
             
-            # Tri par score décroissant
-            analyzed_contents.sort(key=lambda x: x.analysis.relevance_score, reverse=True)
+            # Les résultats sont déjà triés par final_score dans _finalize_analysis
             
             # Logging des résultats
             processing_time = (final_state.get("end_time", datetime.now()) - 
@@ -249,6 +248,18 @@ class TechAnalyzerAgent:
                         raw_content=content,
                         analysis=result
                     )
+                    
+                    # Calcul du score final pondéré pour compatibilité avec le synthétiseur
+                    final_score = (
+                        result.relevance_score * 0.4 +  # Normalisation 0-10 -> 0-1
+                        result.practical_value * 0.3 +
+                        (8.0 if result.recommended else 4.0) * 0.3
+                    ) / 10.0  # Normalisation finale vers 0-1
+                    
+                    # Ajout de l'attribut final_score pour compatibilité
+                    analyzed_content.final_score = final_score
+                    analyzed_content.priority_rank = 0  # Sera calculé plus tard
+                    
                     state.analysis_results.append(analyzed_content)
                     
                     score = result.relevance_score
@@ -339,6 +350,21 @@ class TechAnalyzerAgent:
         
         state.end_time = datetime.now()
         
+        # Tri des résultats par final_score et attribution des rangs
+        if state.analysis_results:
+            sorted_results = sorted(
+                state.analysis_results, 
+                key=lambda x: x.final_score, 
+                reverse=True
+            )
+            
+            # Attribution des rangs de priorité
+            for i, result in enumerate(sorted_results, 1):
+                result.priority_rank = i
+            
+            # Remplacement de la liste par la version triée
+            state.analysis_results = sorted_results
+        
         # Statistiques finales
         total_analyzed = len(state.analysis_results)
         total_failed = len(state.failed_analyses)
@@ -352,6 +378,11 @@ class TechAnalyzerAgent:
         # Recommandations
         recommended_count = sum(1 for result in state.analysis_results if result.analysis.recommended)
         self.logger.info(f"   🎯 Recommandations: {recommended_count}/{total_analyzed}")
+        
+        # Log des top scores
+        if state.analysis_results:
+            avg_score = sum(r.final_score for r in state.analysis_results) / len(state.analysis_results)
+            self.logger.info(f"   📈 Score final moyen: {avg_score:.2f}")
         
         return state
     
