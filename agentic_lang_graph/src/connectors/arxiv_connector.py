@@ -42,37 +42,47 @@ class ArxivConnector(BaseConnector):
     - Volume variable selon les périodes
     """
     
-    # Catégories ArXiv pertinentes pour notre veille
+    # Catégories ArXiv OPTIMISÉES (plus actives)
     RELEVANT_CATEGORIES = [
-        "cs.AI",    # Artificial Intelligence
+        "cs.LG",    # Machine Learning (plus actif)
         "cs.CL",    # Computation and Language (NLP)
+        "stat.ML",  # Machine Learning (Statistics)
+        "cs.AI",    # Artificial Intelligence
         "cs.CV",    # Computer Vision
-        "cs.HC",    # Human-Computer Interaction
         "cs.IR",    # Information Retrieval
-        "cs.LG",    # Machine Learning
+        "cs.HC",    # Human-Computer Interaction
         "cs.MA",    # Multiagent Systems
         "cs.NE",    # Neural and Evolutionary Computing
-        "stat.ML",  # Machine Learning (Statistics)
     ]
     
-    # Mots-clés techniques spécifiques à rechercher
+    # Mots-clés OPTIMISÉS (plus génériques et populaires)
     DEFAULT_KEYWORDS = [
+        # Mots-clés très populaires (priorité haute)
+        "machine learning",
+        "neural network", 
+        "artificial intelligence",
+        "deep learning",
+        
+        # Mots-clés IA moderne
+        "transformer",
         "large language model",
         "language model",
-        "transformer",
+        "LLM",
+        
+        # Techniques spécifiques
         "attention mechanism",
-        "generative AI",
-        "GPT",
-        "BERT",
-        "neural network",
-        "deep learning",
-        "artificial intelligence",
-        "machine learning",
+        "generative AI", 
         "natural language processing",
         "computer vision",
         "reinforcement learning",
+        
+        # Modèles populaires
+        "GPT",
+        "BERT",
+        "transformer model",
+        
+        # Applications
         "multi-agent",
-        "LLM",
         "chatbot",
         "conversational AI",
         "prompt engineering",
@@ -105,9 +115,9 @@ class ArxivConnector(BaseConnector):
             all_keywords.extend(keywords)
         self.search_keywords = list(set(all_keywords))  # Supprime les doublons
         
-        # Configuration de recherche
-        self.max_results_per_query = 50  # Limite par requête
-        self.days_back = 30  # Chercher les papers des N derniers jours
+        # Configuration de recherche OPTIMISÉE
+        self.max_results_per_query = 200  # Limite par requête (maximisée)
+        self.days_back = 180  # Chercher les papers des N derniers jours (très permissif)
         
         self.logger.info(f"ArXiv connector initialisé avec {len(self.categories)} catégories et {len(self.search_keywords)} mots-clés")
     

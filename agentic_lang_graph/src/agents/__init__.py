@@ -1,7 +1,24 @@
 # Agents module
 
-from .tech_collector_agent import TechCollectorAgent
+from .tech_collector_agent import TechCollectorAgent, CollectionConfig
+from .simple_analyzer_prototype import (
+    SimpleAnalyzerPrototype,
+    ExpertProfile,
+    ExpertLevel,
+    AnalyzedContent,
+    ContentAnalysis,
+    DifficultyLevel
+)
+from .tech_analyzer_agent import TechAnalyzerAgent
 
 __all__ = [
-    'TechCollectorAgent'
+    'TechCollectorAgent',
+    'CollectionConfig',
+    'SimpleAnalyzerPrototype',
+    'TechAnalyzerAgent',
+    'ExpertProfile', 
+    'ExpertLevel',
+    'AnalyzedContent',
+    'ContentAnalysis',
+    'DifficultyLevel'
 ]
