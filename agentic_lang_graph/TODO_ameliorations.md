@@ -36,7 +36,7 @@
 - [ ] Ajouter des requêtes pour éviter la re-collecte
 - [ ] Implémenter un cache intelligent des analyses
 
-**🎯 Bénéfices** : Historique complet, éviter la re-collecte, analytics, débogage facilité
+**🎯 Bénéfices** : Historique complet, éviter la re-collecte (et donc de proposer un article déjà proposé dans le TOP N), analytics, débogage facilité
 
 ---
 
