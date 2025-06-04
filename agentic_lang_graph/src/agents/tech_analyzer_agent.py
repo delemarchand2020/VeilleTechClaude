@@ -22,13 +22,15 @@ from dotenv import load_dotenv
 # Chargement automatique des variables d'environnement
 load_dotenv()
 
+# Imports des modèles centralisés
 from ..connectors import RawContent
-from .simple_analyzer_prototype import (
-    ExpertProfile, 
-    ContentAnalysis, 
+from ..models.analysis_models import (
+    ExpertProfile,
+    ContentAnalysis,
     AnalyzedContent,
     DifficultyLevel
 )
+from ..utils.prompt_loader import load_prompt
 
 
 @dataclass
@@ -388,32 +390,12 @@ class TechAnalyzerAgent:
     
     def _build_system_prompt(self, profile: ExpertProfile) -> str:
         """Construit le prompt système pour le LLM."""
-        return f"""Tu es un expert en veille technologique spécialisé dans l'IA, GenAI, LLM et les systèmes multi-agents.
-
-PROFIL DE L'EXPERT:
-- Niveau: {profile.level.value}
-- Intérêts: {', '.join(profile.interests)}
-- Éviter: {', '.join(profile.avoid_topics)}
-- Types préférés: {', '.join(profile.preferred_content_types)}
-
-TÂCHE: Analyser des articles techniques et retourner une évaluation JSON structurée.
-
-FORMAT DE RÉPONSE (JSON obligatoire):
-{{
-    "relevance_score": 8.5,
-    "difficulty_level": "intermediate",
-    "main_topics": ["LangGraph", "Multi-agent"],
-    "key_insights": "Article détaillant...",
-    "practical_value": 7.0,
-    "reasons": ["Contenu technique avancé", "Exemples pratiques"],
-    "recommended": true
-}}
-
-CRITÈRES D'ÉVALUATION:
-- relevance_score (0-10): Pertinence pour le profil expert
-- difficulty_level: "beginner", "intermediate", "expert"
-- practical_value (0-10): Valeur pratique vs théorique
-- recommended: true si score ≥ 7 ET correspond au profil"""
+        return load_prompt("analyzer/system", {
+            "expert_level": profile.level.value,
+            "interests": ', '.join(profile.interests),
+            "avoid_topics": ', '.join(profile.avoid_topics),
+            "preferred_content_types": ', '.join(profile.preferred_content_types)
+        })
 
     def _build_analysis_prompt(self, content: RawContent) -> str:
         """Construit le prompt d'analyse pour un contenu spécifique."""
@@ -436,21 +418,10 @@ CRITÈRES D'ÉVALUATION:
         if content.published_date:
             info_parts.append(f"DATE: {content.published_date.strftime('%Y-%m-%d')}")
         
-        prompt = f"""Analyse cet article technique:
-
-{chr(10).join(info_parts)}
-
-Retourne ton analyse au format JSON en évaluant:
-1. La pertinence pour un expert {self.profile.level.value}
-2. Le niveau de difficulté technique
-3. Les sujets principaux abordés
-4. Les insights clés apportés
-5. La valeur pratique vs théorique
-6. Si tu le recommandes pour ce profil
-
-Réponds uniquement en JSON valide."""
-        
-        return prompt
+        return load_prompt("analyzer/content_analysis", {
+            "article_info": chr(10).join(info_parts),
+            "expert_level": self.profile.level.value
+        })
     
     async def get_recommendations(self, 
                                 raw_contents: List[RawContent], 

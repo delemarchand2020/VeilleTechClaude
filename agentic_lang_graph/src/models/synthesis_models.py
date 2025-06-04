@@ -10,7 +10,7 @@ from datetime import datetime
 from enum import Enum
 
 # Import des modèles existants
-from ..agents.tech_analyzer_agent import AnalyzedContent
+from ..models.analysis_models import AnalyzedContent
 
 
 class SynthesisStage(Enum):
@@ -190,113 +190,4 @@ DEFAULT_SYNTHESIS_CONFIG = {
         "best_practices",
         "emerging_technologies"
     ]
-}
-
-
-# Templates de prompts pour la synthèse
-SYNTHESIS_PROMPTS = {
-    "executive_summary": """Tu es un expert technique senior qui rédige un résumé exécutif pour des ingénieurs expérimentés.
-
-CONTEXTE: Digest quotidien de veille technologique GenAI/LLM/Agentic
-AUDIENCE: {target_audience}
-ARTICLES ANALYSÉS: {articles_count}
-
-ARTICLES PRINCIPAUX:
-{articles_overview}
-
-CONSIGNE: Rédige un résumé exécutif de 100-150 mots qui:
-1. Identifie les tendances principales observées aujourd'hui
-2. Souligne les innovations les plus significatives
-3. Met en perspective l'impact pour les équipes techniques
-4. Adopte un ton professionnel et informatif
-
-Le résumé doit capturer l'essentiel pour un lecteur expert qui veut comprendre rapidement les développements du jour.""",
-
-    "article_synthesis": """Tu es un expert technique qui synthétise des articles pour des ingénieurs seniors.
-
-ARTICLE À SYNTHÉTISER:
-Titre: {title}
-Source: {source}
-Catégorie: {category}
-Score d'analyse: {score}
-Insights clés: {insights}
-Contenu: {content}
-
-CONSIGNE: Crée une synthèse structurée avec:
-
-1. TITRE RAFFINÉ (concis et accrocheur)
-2. RÉSUMÉ EXÉCUTIF (2-3 phrases maximum)
-3. POINTS CLÉS (3-5 takeaways concrets)
-4. ASPECTS TECHNIQUES (technologies précises, méthodes, performance, contraintes - éviter le générique)
-5. NIVEAU DE COMPLEXITÉ (intermediate/advanced/expert)
-6. INNOVATION (incremental/significant/breakthrough)
-
-POUR LES ASPECTS TECHNIQUES - PRIORISE:
-- Technologies/frameworks/librairies spécifiques mentionnés
-- Métriques de performance ou benchmarks
-- Méthodes algorithmiques concrètes
-- Cas d'usage pratiques et contraintes
-- Évite les points génériques comme "utilise l'IA" ou "améliore les performances"
-
-Format JSON attendu:
-{{
-    "title_refined": "...",
-    "executive_summary": "...",
-    "key_takeaways": ["...", "..."],
-    "technical_highlights": ["techno/méthode spécifique 1", "contrainte/performance spécifique 2"],
-    "complexity_level": "...",
-    "innovation_level": "..."
-}}""",
-
-    "insights_extraction": """Tu es un expert en veille technologique qui identifie les insights transversaux.
-
-ARTICLES ANALYSÉS:
-{articles_summaries}
-
-CONSIGNE: Identifie 3-5 insights clés qui émergent de l'analyse croisée de ces articles.
-
-Critères pour un bon insight:
-- Transversal (identifiable dans plusieurs articles)
-- Actionnable (peut influencer des décisions techniques)
-- Significatif (impact réel sur l'industrie/pratiques)
-- Concret (évite les généralités)
-
-Format: Liste de phrases courtes et percutantes (15-25 mots max par insight)
-
-Exemple:
-- "L'architecture multi-agent devient mainstream avec des patterns standardisés émergents"
-- "L'optimisation des LLM se concentre sur l'efficacité en production vs la performance pure"
-
-Retourne uniquement la liste des insights, un par ligne.""",
-
-    "recommendations": """Tu es un tech lead expérimenté qui transforme la veille en recommandations actionables.
-
-ARTICLES ET INSIGHTS:
-{content_summary}
-
-AUDIENCE: {target_audience}
-
-CONSIGNE: Génère 3-4 recommandations actionables basées sur cette veille.
-
-Chaque recommandation doit inclure:
-1. TITRE (court et clair)
-2. DESCRIPTION (pourquoi c'est important)
-3. ACTIONS CONCRÈTES (2-4 étapes spécifiques)
-4. CATÉGORIE (learning/implementation/investigation/monitoring)
-5. PRIORITÉ (high/medium/low)
-6. EFFORT ESTIMÉ (< 1h / 1-4h / 1-2d / > 1w)
-
-Format JSON attendu:
-{{
-    "recommendations": [
-        {{
-            "title": "...",
-            "description": "...",
-            "action_items": ["...", "..."],
-            "category": "...",
-            "priority": "...",
-            "time_investment": "..."
-        }}
-    ]
-}}"""
 }

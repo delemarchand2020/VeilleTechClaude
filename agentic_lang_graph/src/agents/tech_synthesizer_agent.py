@@ -22,13 +22,14 @@ import os
 # Chargement automatique des variables d'environnement
 load_dotenv()
 
-# Imports des modèles
-from ..agents.tech_analyzer_agent import AnalyzedContent
+# Imports des modèles centralisés
+from ..models.analysis_models import AnalyzedContent
 from ..models.synthesis_models import (
     SynthesisState, SynthesisStage, ReportSection,
     ArticleSynthesis, ActionableRecommendation, TechnicalTrend, DailyDigest,
-    DEFAULT_SYNTHESIS_CONFIG, SYNTHESIS_PROMPTS
+    DEFAULT_SYNTHESIS_CONFIG
 )
+from ..utils.prompt_loader import load_prompt
 
 
 class TechSynthesizerAgent:
@@ -216,11 +217,11 @@ class TechSynthesizerAgent:
         ])
         
         # Construction du prompt
-        prompt_content = SYNTHESIS_PROMPTS["executive_summary"].format(
-            target_audience=state["target_audience"],
-            articles_count=len(articles),
-            articles_overview=articles_overview
-        )
+        prompt_content = load_prompt("synthesizer/executive_summary", {
+            "target_audience": state["target_audience"],
+            "articles_count": len(articles),
+            "articles_overview": articles_overview
+        })
         
         try:
             # Appel LLM
@@ -293,27 +294,14 @@ class TechSynthesizerAgent:
         """Synthétise un article unique avec le LLM."""
         
         # Préparation du prompt optimisé pour garantir du JSON
-        prompt_content = f"""Tu es un expert technique qui synthétise des articles pour des ingénieurs seniors.
-
-ARTICLE À SYNTHÉTISER:
-Titre: {article.raw_content.title}
-Source: {article.raw_content.source}
-Catégorie: {article.analysis.category}
-Score d'analyse: {article.analysis.relevance_score}
-Insights clés: {', '.join(article.analysis.key_insights) if article.analysis.key_insights else "N/A"}
-Contenu: {(article.raw_content.content or article.raw_content.excerpt or "Contenu non disponible")[:1500]}
-
-CONSIGNE: Crée une synthèse structurée.
-
-Réponds UNIQUEMENT avec ce JSON exact (aucun autre texte avant ou après):
-{{
-    "title_refined": "Titre court et accrocheur de l'article",
-    "executive_summary": "Résumé en 2-3 phrases expliquant le contenu principal et l'apport technique",
-    "key_takeaways": ["Point clé concret 1", "Point clé concret 2", "Point clé concret 3"],
-    "technical_highlights": ["Technologie/méthode spécifique mentionnée", "Aspect d'implémentation ou contrainte technique"],
-    "complexity_level": "intermediate",
-    "innovation_level": "incremental"
-}}"""
+        prompt_content = load_prompt("synthesizer/article_synthesis", {
+            "title": article.raw_content.title,
+            "source": article.raw_content.source,
+            "category": article.analysis.category,
+            "score": article.analysis.relevance_score,
+            "insights": ', '.join(article.analysis.key_insights) if article.analysis.key_insights else "N/A",
+            "content": (article.raw_content.content or article.raw_content.excerpt or "Contenu non disponible")[:1500]
+        })
         
         messages = [
             SystemMessage(content="Tu es un expert qui synthétise des articles techniques. Réponds TOUJOURS en JSON valide."),
@@ -451,9 +439,9 @@ Réponds UNIQUEMENT avec ce JSON exact (aucun autre texte avant ou après):
             for synthesis in state["articles_synthesis"]
         ])
         
-        prompt_content = SYNTHESIS_PROMPTS["insights_extraction"].format(
-            articles_summaries=articles_summaries
-        )
+        prompt_content = load_prompt("synthesizer/insights_extraction", {
+            "articles_summaries": articles_summaries
+        })
         
         try:
             messages = [
@@ -505,10 +493,10 @@ Réponds UNIQUEMENT avec ce JSON exact (aucun autre texte avant ou après):
 INSIGHTS CLÉS:
 {chr(10).join([f"- {insight}" for insight in state["key_insights"]])}"""
         
-        prompt_content = SYNTHESIS_PROMPTS["recommendations"].format(
-            content_summary=content_summary,
-            target_audience=state["target_audience"]
-        )
+        prompt_content = load_prompt("synthesizer/recommendations", {
+            "content_summary": content_summary,
+            "target_audience": state["target_audience"]
+        })
         
         try:
             messages = [

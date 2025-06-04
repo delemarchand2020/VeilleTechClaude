@@ -19,6 +19,7 @@ PyGithub>=1.59.0
 
 # Configuration
 python-dotenv>=1.0.0
+PyYAML>=6.0
 
 # Traitement de texte
 nltk>=3.8.0

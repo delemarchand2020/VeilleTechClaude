@@ -1,0 +1,214 @@
+# Configuration principale du système de veille technologique
+# Ce fichier centralise tous les paramètres configurables
+
+# === CONFIGURATION COLLECTE ===
+collection:
+  # Limites de collecte
+  total_limit: 15
+  source_limits:
+    medium: 8
+    arxiv: 8
+  
+  # Filtrage par mots-clés
+  keywords:
+    - AI
+    - GenAI
+    - LLM
+    - LangGraph
+    - Multi-agent
+    - RAG
+    - Machine Learning
+    - Deep Learning
+  
+  # Critères temporels
+  max_age_days: 30
+  
+  # Sources actives
+  enabled_sources:
+    - medium
+    - arxiv
+  
+  # Configuration par source
+  sources:
+    medium:
+      feeds:
+        - "https://medium.com/feed/tag/artificial-intelligence"
+        - "https://medium.com/feed/tag/llm"
+      timeout: 30
+      retry_attempts: 3
+    
+    arxiv:
+      categories:
+        - "cs.AI"
+        - "cs.LG"
+        - "cs.CL"
+      timeout: 30
+      max_results_per_query: 10
+
+# === CONFIGURATION ANALYSE ===
+analysis:
+  # Profil expert par défaut
+  expert_profile:
+    level: "intermediate"  # beginner, intermediate, expert
+    interests:
+      - "LangGraph"
+      - "LangChain"
+      - "Multi-agent"
+      - "RAG"
+      - "GenAI"
+      - "LLM"
+    avoid_topics:
+      - "basic tutorials"
+      - "introduction to programming"
+      - "hello world"
+    preferred_content_types:
+      - "technical implementation"
+      - "case studies"
+      - "best practices"
+      - "architecture"
+  
+  # Paramètres d'analyse
+  batch_size: 3
+  max_retries: 2
+  
+  # Critères de recommandation
+  recommendation_threshold: 7.0  # Score minimum pour recommandation
+  
+  # Configuration LLM
+  llm:
+    model: "gpt-4o-mini"
+    temperature: 0.1
+    max_tokens: 500
+
+# === CONFIGURATION SYNTHÈSE ===
+synthesis:
+  # Audience cible
+  target_audience: "senior_engineer"  # senior_engineer, tech_lead, architect
+  
+  # Limites de contenu
+  max_articles_in_digest: 3
+  max_insights: 5
+  max_recommendations: 4
+  
+  # Longueurs de contenu
+  word_limits:
+    executive_summary: 150
+    article_summary: 100
+  
+  # Format et style
+  tone: "professional"  # casual, professional, academic
+  technical_depth: "high"  # low, medium, high
+  
+  # Fonctionnalités
+  include_technical_trends: true
+  include_action_items: true
+  
+  # Domaines de focus
+  focus_areas:
+    - "implementation_details"
+    - "architectural_patterns"
+    - "performance_optimization"
+    - "best_practices"
+    - "emerging_technologies"
+  
+  # Configuration LLM
+  llm:
+    model: "gpt-4o"
+    temperature: 0.2
+    max_tokens: 1000
+
+# === CONFIGURATION OUTPUT ===
+output:
+  # Format du digest
+  format: "markdown"  # markdown, html, pdf
+  
+  # Répertoires
+  reports_dir: "output/reports"
+  
+  # Nomenclature des fichiers
+  filename_template: "tech_digest_{date}.md"
+  date_format: "%Y%m%d"
+  
+  # Métriques à inclure
+  include_metrics: true
+  include_processing_time: true
+  include_sources_breakdown: true
+
+# === CONFIGURATION LOGGING ===
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan> | {message}"
+  
+  # Logs vers fichier
+  file_logging:
+    enabled: false
+    path: "logs/veille.log"
+    rotation: "1 day"
+    retention: "7 days"
+
+# === CONFIGURATION PERFORMANCE ===
+performance:
+  # Parallélisation
+  max_concurrent_analyses: 3
+  
+  # Timeouts
+  timeouts:
+    collection: 60  # secondes
+    analysis: 120
+    synthesis: 90
+  
+  # Cache
+  cache:
+    enabled: true
+    ttl: 3600  # secondes (1 heure)
+
+# === PROFILS PRÉDÉFINIS ===
+profiles:
+  demo:
+    collection:
+      total_limit: 6
+      source_limits:
+        medium: 3
+        arxiv: 3
+    analysis:
+      batch_size: 2
+    synthesis:
+      max_articles_in_digest: 2
+  
+  production:
+    collection:
+      total_limit: 20
+      source_limits:
+        medium: 12
+        arxiv: 10
+    performance:
+      max_concurrent_analyses: 5
+  
+  expert:
+    analysis:
+      expert_profile:
+        level: "expert"
+    synthesis:
+      target_audience: "architect"
+      technical_depth: "high"
+      max_articles_in_digest: 5
+
+# === ENVIRONNEMENTS ===
+environments:
+  development:
+    logging:
+      level: "DEBUG"
+    performance:
+      timeouts:
+        collection: 30
+        analysis: 60
+        synthesis: 45
+  
+  production:
+    logging:
+      level: "INFO"
+      file_logging:
+        enabled: true
+    performance:
+      cache:
+        enabled: true

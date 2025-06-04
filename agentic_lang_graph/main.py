@@ -7,18 +7,12 @@ Génère automatiquement un digest quotidien de veille technologique.
 import asyncio
 import sys
 import os
+import argparse
 from datetime import datetime
 from loguru import logger
 
-# Configuration du logging
-logger.remove()
-logger.add(
-    sys.stdout, 
-    format="<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{function}</cyan> | {message}",
-    level="INFO"
-)
-
-from src.utils.config import validate_config
+# Imports de la configuration centralisée
+from src.utils.config_loader import load_config
 from src.models.database import DatabaseManager
 from src.agents import (
     TechCollectorAgent, CollectionConfig,
@@ -26,7 +20,96 @@ from src.agents import (
 )
 
 
-async def create_daily_digest():
+def setup_logging(level: str = "INFO"):
+    """Configure le logging."""
+    logger.remove()
+    logger.add(
+        sys.stdout, 
+        format="<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{function}</cyan> | {message}",
+        level=level
+    )
+
+
+def parse_arguments():
+    """Parse les arguments de ligne de commande."""
+    parser = argparse.ArgumentParser(
+        description="Agent de Veille Intelligente - Générateur de digest quotidien",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Exemples d'utilisation:
+  python main.py                              # Mode production standard
+  python main.py --demo                       # Mode démo rapide
+  python main.py --profile expert             # Profil expert
+  python main.py --environment development    # Environnement de développement
+  python main.py --total-limit 20             # Override limite de collecte
+  python main.py --target-audience tech_lead  # Override audience cible
+        """
+    )
+    
+    # Modes de fonctionnement
+    parser.add_argument(
+        "--demo", "-d", 
+        action="store_true", 
+        help="Mode démo avec collecte réduite"
+    )
+    
+    # Configuration
+    parser.add_argument(
+        "--profile", "-p", 
+        choices=["demo", "production", "expert"],
+        help="Profil de configuration à utiliser"
+    )
+    
+    parser.add_argument(
+        "--environment", "-e", 
+        choices=["development", "production"],
+        help="Environnement d'exécution"
+    )
+    
+    # Overrides de configuration
+    parser.add_argument(
+        "--total-limit", 
+        type=int, 
+        help="Nombre maximum d'articles à collecter"
+    )
+    
+    parser.add_argument(
+        "--target-audience", 
+        choices=["senior_engineer", "tech_lead", "architect"],
+        help="Audience cible pour le digest"
+    )
+    
+    parser.add_argument(
+        "--max-articles", 
+        type=int, 
+        help="Nombre maximum d'articles dans le digest final"
+    )
+    
+    # Options de sortie
+    parser.add_argument(
+        "--output-dir", 
+        help="Répertoire de sortie pour les digests"
+    )
+    
+    # Logging
+    parser.add_argument(
+        "--log-level", 
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
+        help="Niveau de logging"
+    )
+    
+    # Options de débogage
+    parser.add_argument(
+        "--verbose", "-v", 
+        action="store_true", 
+        help="Mode verbose (equivalent à --log-level DEBUG)"
+    )
+    
+    return parser.parse_args()
+
+
+async def create_daily_digest(profile: str = None, environment: str = None, **overrides):
     """Workflow principal de création du digest quotidien."""
     
     logger.info("🚀 DÉMARRAGE AGENT DE VEILLE INTELLIGENTE")
@@ -38,24 +121,34 @@ async def create_daily_digest():
         # ===============================
         # CONFIGURATION ET VALIDATION
         # ===============================
-        logger.info("🔧 Validation de la configuration...")
-        validate_config()
+        logger.info("🔧 Chargement de la configuration...")
+        config = load_config(profile=profile, environment=environment)
+        
+        # Application des overrides CLI
+        if overrides:
+            logger.info(f"🔧 Application overrides: {overrides}")
+            # Exemple d'overrides
+            if 'total_limit' in overrides:
+                config.collection.total_limit = overrides['total_limit']
+            if 'target_audience' in overrides:
+                config.synthesis.target_audience = overrides['target_audience']
+            if 'max_articles' in overrides:
+                config.synthesis.max_articles_in_digest = overrides['max_articles']
+        
+        logger.info(f"⚙️ Configuration:")
+        logger.info(f"   📡 Collecte: {config.collection.total_limit} articles max")
+        logger.info(f"   🎯 Audience: {config.synthesis.target_audience}")
+        logger.info(f"   📝 Digest: {config.synthesis.max_articles_in_digest} articles")
         
         logger.info("💾 Initialisation base de données...")
         db = DatabaseManager()
         
-        # Configuration pour la collecte production
+        # Configuration pour la collecte basée sur le config file
         collection_config = CollectionConfig(
-            total_limit=15,  # Nombre optimisé pour analyse qualitative
-            source_limits={'medium': 8, 'arxiv': 8},
-            keywords=[
-                'AI', 'GenAI', 'LLM', 'GPT', 'ChatGPT',
-                'LangChain', 'LangGraph', 'transformer',
-                'machine learning', 'deep learning',
-                'neural network', 'agentic', 'multi-agent',
-                'artificial intelligence'
-            ],
-            max_age_days=30,  # Articles récents mais suffisamment de contenu
+            total_limit=config.collection.total_limit,
+            source_limits=config.collection.source_limits,
+            keywords=config.collection.keywords,
+            max_age_days=config.collection.max_age_days,
             enable_deduplication=True
         )
         
@@ -84,7 +177,16 @@ async def create_daily_digest():
         # ===============================
         logger.info("\n🧠 PHASE 2: Analyse intelligente...")
         
-        analyzer = TechAnalyzerAgent()
+        # Création de l'expert profile depuis la config
+        from src.models.analysis_models import ExpertProfile, ExpertLevel
+        expert_profile = ExpertProfile(
+            level=ExpertLevel(config.analysis.expert_level),
+            interests=config.analysis.interests,
+            avoid_topics=config.analysis.avoid_topics,
+            preferred_content_types=config.analysis.preferred_content_types
+        )
+        
+        analyzer = TechAnalyzerAgent(expert_profile)
         analyzed_articles = await analyzer.analyze_contents(collection_result.contents)
         
         if not analyzed_articles:
@@ -104,11 +206,29 @@ async def create_daily_digest():
         # ===============================
         logger.info("\n📝 PHASE 3: Génération du digest...")
         
-        synthesizer = TechSynthesizerAgent()
+        # Configuration du synthétiseur avec la config centralisée
+        synthesis_config = {
+            "target_audience": config.synthesis.target_audience,
+            "max_articles_in_digest": config.synthesis.max_articles_in_digest,
+            "executive_summary_max_words": config.synthesis.executive_summary_max_words,
+            "article_summary_max_words": config.synthesis.article_summary_max_words,
+            "max_insights": config.synthesis.max_insights,
+            "max_recommendations": config.synthesis.max_recommendations,
+            "include_technical_trends": config.synthesis.include_technical_trends,
+            "include_action_items": config.synthesis.include_action_items,
+            "tone": config.synthesis.tone,
+            "technical_depth": config.synthesis.technical_depth,
+            "focus_areas": config.synthesis.focus_areas
+        }
+        
+        synthesizer = TechSynthesizerAgent(synthesis_config)
         daily_digest = await synthesizer.create_daily_digest(analyzed_articles)
         
-        # Sauvegarde du digest
-        output_path = await synthesizer.save_digest_to_file(daily_digest)
+        # Sauvegarde du digest selon la config output
+        output_path = await synthesizer.save_digest_to_file(
+            daily_digest, 
+            output_dir=config.output.reports_dir
+        )
         
         logger.info(f"✅ Digest généré:")
         logger.info(f"   📋 {daily_digest.title}")
@@ -130,7 +250,7 @@ async def create_daily_digest():
         
         # Aperçu du contenu
         logger.info(f"\n📋 APERÇU DU DIGEST:")
-        logger.info(f"🗓️ {daily_digest.title}")
+        logger.info(f"🗺️ {daily_digest.title}")
         
         # Top articles
         for i, article in enumerate(daily_digest.top_articles[:2], 1):
@@ -157,60 +277,67 @@ async def create_daily_digest():
         raise
 
 
-async def run_quick_demo():
-    """Démo rapide avec moins d'articles pour test."""
+def main():
+    """Fonction principale avec gestion des arguments CLI."""
     
-    logger.info("🚀 MODE DÉMO RAPIDE")
+    # Parse des arguments
+    args = parse_arguments()
     
-    # Configuration allégée
-    demo_config = CollectionConfig(
-        total_limit=6,
-        source_limits={'medium': 3, 'arxiv': 3},
-        keywords=['AI', 'LLM', 'machine learning'],
-        max_age_days=60
-    )
+    # Configuration du logging
+    log_level = "DEBUG" if args.verbose else args.log_level
+    setup_logging(log_level)
+    
+    # Détermination du profil et environnement
+    profile = args.profile or ("demo" if args.demo else None)
+    environment = args.environment
+    
+    # Préparation des overrides
+    overrides = {}
+    if args.total_limit:
+        overrides['total_limit'] = args.total_limit
+    if args.target_audience:
+        overrides['target_audience'] = args.target_audience  
+    if args.max_articles:
+        overrides['max_articles'] = args.max_articles
+    
+    # Log des paramètres d'exécution
+    logger.info("🚀 Agent de Veille Intelligente")
+    if profile:
+        logger.info(f"📋 Profil: {profile}")
+    if environment:
+        logger.info(f"🌍 Environnement: {environment}")
+    if overrides:
+        logger.info(f"🔧 Overrides: {overrides}")
     
     try:
-        # Collecte
-        collector = TechCollectorAgent(demo_config)
-        collection_result = await collector.collect_all_sources()
+        # Exécution principale
+        result = asyncio.run(create_daily_digest(
+            profile=profile,
+            environment=environment,
+            **overrides
+        ))
         
-        # Analyse
-        analyzer = TechAnalyzerAgent()
-        analyzed_articles = await analyzer.analyze_contents(collection_result.contents)
-        
-        # Synthèse
-        synthesizer = TechSynthesizerAgent()
-        daily_digest = await synthesizer.create_daily_digest(analyzed_articles)
-        
-        # Sauvegarde
-        output_path = await synthesizer.save_digest_to_file(daily_digest)
-        
-        logger.info(f"✅ Démo terminée - Digest: {output_path}")
-        return daily_digest
-        
+        if result:
+            logger.info("🎉 Traitement terminé avec succès!")
+            
+            # Affichage des statistiques finales
+            stats = result['stats']
+            logger.info(f"📊 Statistiques finales:")
+            logger.info(f"   📡 Collectés: {stats['collection'].total_collected}")
+            logger.info(f"   🧠 Analysés: {len(stats['analysis'])}")
+            logger.info(f"   ⏱️ Durée totale: {stats['total_time']:.1f}s")
+            logger.info(f"   📄 Fichier: {result['output_path']}")
+        else:
+            logger.error("❌ Échec du traitement")
+            sys.exit(1)
+            
+    except KeyboardInterrupt:
+        logger.warning("⚠️ Interruption utilisateur")
+        sys.exit(130)
     except Exception as e:
-        logger.error(f"❌ Erreur démo: {e}")
-        raise
-
-
-def main():
-    """Fonction principale avec gestion des modes."""
-    
-    # Détection du mode
-    demo_mode = "--demo" in sys.argv or "-d" in sys.argv
-    
-    if demo_mode:
-        logger.info("🎬 Lancement en mode DÉMO (collecte réduite)")
-        result = asyncio.run(run_quick_demo())
-    else:
-        logger.info("🎯 Lancement en mode PRODUCTION (collecte complète)")
-        result = asyncio.run(create_daily_digest())
-    
-    if result:
-        logger.info("🎉 Traitement terminé avec succès!")
-    else:
-        logger.error("❌ Échec du traitement")
+        logger.error(f"❌ Erreur fatale: {e}")
+        if log_level == "DEBUG":
+            logger.exception("Détails:")
         sys.exit(1)
 
 
