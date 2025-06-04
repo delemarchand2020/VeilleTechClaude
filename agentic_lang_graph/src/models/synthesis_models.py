@@ -136,34 +136,36 @@ class TechnicalTrend:
 class DailyDigest:
     """Digest quotidien complet."""
     
-    # Métadonnées
+    # Métadonnées (obligatoires)
     date: datetime
     title: str
     subtitle: str
     target_audience: str
     
-    # Contenu principal
+    # Contenu principal (obligatoires)
     executive_summary: str
     top_articles: List[ArticleSynthesis]
     key_insights: List[str]
     technical_trends: List[TechnicalTrend]
     recommendations: List[ActionableRecommendation]
     
-    # Statistiques
-    total_articles_analyzed: int
-    articles_recommended: int
-    average_quality_score: float
-    
-    # Ressources
+    # Ressources (obligatoires)
     all_article_links: List[Dict[str, str]]  # {"title": "", "url": "", "source": ""}
     suggested_reading: List[str]
     
-    # Format final
+    # Statistiques (avec valeurs par défaut)
+    total_articles_collected: int = 0  # Articles collectés au total
+    total_articles_analyzed: int = 0   # Articles analysés par l'IA
+    total_articles_selected: int = 0   # Articles sélectionnés pour le digest
+    articles_recommended: int = 0      # Articles recommandés par l'analyseur
+    average_quality_score: float = 0.0
+    
+    # Format final (avec valeurs par défaut)
     markdown_content: Optional[str] = None
     word_count: int = 0
     estimated_read_time: int = 0  # minutes
     
-    # Métadonnées de génération
+    # Métadonnées de génération (avec valeurs par défaut)
     generated_at: datetime = field(default_factory=datetime.now)
     generator_version: str = "1.0"
     llm_model_used: str = "gpt-4o"
@@ -225,16 +227,23 @@ CONSIGNE: Crée une synthèse structurée avec:
 1. TITRE RAFFINÉ (concis et accrocheur)
 2. RÉSUMÉ EXÉCUTIF (2-3 phrases maximum)
 3. POINTS CLÉS (3-5 takeaways concrets)
-4. ASPECTS TECHNIQUES (éléments d'implémentation/architecture)
+4. ASPECTS TECHNIQUES (technologies précises, méthodes, performance, contraintes - éviter le générique)
 5. NIVEAU DE COMPLEXITÉ (intermediate/advanced/expert)
 6. INNOVATION (incremental/significant/breakthrough)
+
+POUR LES ASPECTS TECHNIQUES - PRIORISE:
+- Technologies/frameworks/librairies spécifiques mentionnés
+- Métriques de performance ou benchmarks
+- Méthodes algorithmiques concrètes
+- Cas d'usage pratiques et contraintes
+- Évite les points génériques comme "utilise l'IA" ou "améliore les performances"
 
 Format JSON attendu:
 {{
     "title_refined": "...",
     "executive_summary": "...",
     "key_takeaways": ["...", "..."],
-    "technical_highlights": ["...", "..."],
+    "technical_highlights": ["techno/méthode spécifique 1", "contrainte/performance spécifique 2"],
     "complexity_level": "...",
     "innovation_level": "..."
 }}""",
