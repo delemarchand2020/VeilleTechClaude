@@ -4,10 +4,10 @@
 # === CONFIGURATION COLLECTE ===
 collection:
   # Limites de collecte
-  total_limit: 15
+  total_limit: 30
   source_limits:
-    medium: 8
-    arxiv: 8
+    medium: 20
+    arxiv: 20
   
   # Filtrage par mots-clés
   keywords:
@@ -21,7 +21,7 @@ collection:
     - Deep Learning
   
   # Critères temporels
-  max_age_days: 30
+  max_age_days: 45
   
   # Sources actives
   enabled_sources:
