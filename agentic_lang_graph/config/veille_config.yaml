@@ -4,10 +4,10 @@
 # === CONFIGURATION COLLECTE ===
 collection:
   # Limites de collecte
-  total_limit: 30
+  total_limit: 20
   source_limits:
-    medium: 20
-    arxiv: 20
+    medium: 10
+    arxiv: 5
   
   # Filtrage par mots-clés
   keywords:
