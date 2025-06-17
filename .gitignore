@@ -76,3 +76,12 @@ data/*.xml
 /micr_reader/temp_function_backup.py
 /micr_reader/.gradio/certificate.pem
 /micr_reader/cleanup_project.py
+/read_outlook_mail/reception.pst
+/read_outlook_mail/envoi.pst
+/read_outlook_mail/libpff/
+/read_outlook_mail/envoi.csv
+/read_outlook_mail/reception.csv
+/read_outlook_mail/emails_aimeur.csv
+/read_outlook_mail/emails_esma_final.csv
+/read_outlook_mail/chronologie_memoire.md
+/read_outlook_mail/rapport_detaille_dates.md
